@@ -1,0 +1,1 @@
+module.exports = `[:date[web]] [:method] [:url] [:remote-addr] [:referrer] [:status] [:response-time ms]`;
