@@ -5,9 +5,10 @@ const datemaker = require('datemaker');
 const morgan = require('morgan');
 require('dotenv').config();
 
-// import config objects
+// import other files
 const db = require('./config/db/db');
 const logger = require('./config/logging/winston');
+const usersRouter = require('./routes/usersRouter.js');
 
 // define app and port
 const app = express();
@@ -25,8 +26,10 @@ db.connect(err => {
 const morganFormat = require('./config/logging/morganFormat');
 app.use(morgan(morganFormat, { stream: logger.stream }));
 
+// mount users router
+app.use('/users', usersRouter);
 
-// base route
+// GET /
 app.get('/', (req, res, next) => {
   res.json({ message: 'Headless CMS project' });
 });
@@ -41,7 +44,6 @@ app.use((err, req, res, next) => {
   logger.error(`[${datemaker.UTC()}] [${req.method}] [${req.originalUrl}] [${req.ip}] [${err.stack}]`);
   res.json({ error: true });
 });
-
 
 // run the app
 app.listen(PORT, () => {
