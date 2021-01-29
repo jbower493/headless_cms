@@ -1,14 +1,17 @@
 // import dependencies
 const express = require('express');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const datemaker = require('datemaker');
 const morgan = require('morgan');
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
+const cors = require('cors');
 
 // import other files
 const db = require('./config/db/db');
 const logger = require('./config/logging/winston');
-const usersRouter = require('./routes/usersRouter.js');
+const authRouter = require('./routes/cms/authRouter.js');
 
 // define app and port
 const app = express();
@@ -22,17 +25,33 @@ db.connect(err => {
   logger.info(`${process.env.NODE_ENV} database connected`);
 });
 
+// initialize mysql session store
+const sessionStore = new MySQLStore({}, db);
+
+// initialize sessions
+app.use(session({
+  name: "session_id",
+  genid: (req) => {
+    return uuidv4();
+  },
+  secret: 'secret',
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore
+}));
+
+// allow cross origin resource sharing, note the default setting allows ANY origin to connect, change this for production
+app.use(cors());
+
+// parse json request bodies
+app.use(express.json());
+
 // log http requests
 const morganFormat = require('./config/logging/morganFormat');
 app.use(morgan(morganFormat, { stream: logger.stream }));
 
-// mount users router
-app.use('/users', usersRouter);
-
-// GET /
-app.get('/', (req, res, next) => {
-  res.json({ message: 'Headless CMS project' });
-});
+// mount auth router
+app.use('/auth', authRouter);
 
 // 404 response
 app.use((req, res, next) => {

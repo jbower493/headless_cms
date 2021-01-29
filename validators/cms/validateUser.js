@@ -11,5 +11,8 @@ module.exports = (user) => {
   if(user.password.length < 5) {
     return 'password too short';
   }
+  if(user.role !== 'user' || user.role !== 'admin') {
+    return 'role must be "user" or "admin"'
+  }
   return true;
 };
