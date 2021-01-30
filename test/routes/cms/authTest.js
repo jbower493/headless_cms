@@ -27,8 +27,8 @@ describe('AUTH', () => {
   const agent = chai.request.agent();
 
   const user1 = {
-    username: 'JohnDoe1',
-    password: 'password1',
+    username: 'Bilbo',
+    password: 'baggins',
     role: 'user'
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
@@ -87,16 +87,16 @@ describe('AUTH', () => {
     GET /auth/get-user
   */
   describe('GET /auth/get-user', () => {
+    /*
     it('should send back a message and the logged in user if a user is logged in', (done) => {
       agent
         .post('/auth/login')
         .send({ username: user1.username, password: user1.password })
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
-          console.log(res.cookie('session_id'));
+          //console.log(res.cookie('session_id'));
 
-          // send next request which should come back with the cookie still there
-          agent
+          return agent
             .get('/auth/get-user')
             .end((err, res) => {
               expect(res.body).to.have.property('message');
@@ -109,7 +109,27 @@ describe('AUTH', () => {
               })
             })
         })
-      
+    });*/
+    it('should send back a message and the logged in user if a user is logged in', (done) => {
+      agent
+        .post('/auth/login')
+        .send({ username: user1.username, password: user1.password })
+        .then(res => {
+          expect(res).to.have.cookie('session_id');
+          //console.log(res.cookie('session_id'));
+
+          return agent.get('/auth/get-user')
+            .then(res => {
+              expect(res.body).to.have.property('message');
+              expect(res.body).to.have.property('user');
+              expect(res.body.message).to.equal('A user is logged in');
+              expect(res.body.user).to.be.an('object');
+              //console.log(res.cookie('session_id'));
+              agent.close(err => {
+                done();
+              })
+            })
+        })
     });
     it('should send back a message and user: null if no user is logged in', (done) => {
       chai.request(server)

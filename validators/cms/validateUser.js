@@ -1,4 +1,7 @@
 module.exports = (user) => {
+  if(!user.username || !user.password || !user.role) {
+    return 'field(s) missing';
+  }
   if(typeof user.username !== 'string') {
     return 'username not string';
   }

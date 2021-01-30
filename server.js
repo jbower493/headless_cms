@@ -12,6 +12,7 @@ const cors = require('cors');
 const db = require('./config/db/db');
 const logger = require('./config/logging/winston');
 const authRouter = require('./routes/cms/authRouter.js');
+const authController = require('./controllers/authController');
 
 // define app and port
 const app = express();
@@ -46,9 +47,15 @@ app.use(cors());
 // parse json request bodies
 app.use(express.json());
 
+// temporary, delete this when front end is built
+app.use(express.urlencoded({ extended: false }));
+
 // log http requests
 const morganFormat = require('./config/logging/morganFormat');
 app.use(morgan(morganFormat, { stream: logger.stream }));
+
+// make logged in user available on req object as req.user
+app.use(authController.deserializeUser);
 
 // mount auth router
 app.use('/auth', authRouter);
