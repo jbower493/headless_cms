@@ -24,8 +24,6 @@ chai.use(chaiHttp);
 
 // parent block
 describe('AUTH', () => {
-  const agent = chai.request.agent();
-
   const user1 = {
     username: 'Bilbo',
     password: 'baggins',
@@ -62,11 +60,12 @@ describe('AUTH', () => {
   });
   /*
     GET /auth/login
-  *//*
+  */
   describe('GET /auth/login', () => {
     it('should return an object with success: true property if correct credentials are provided', (done) => {
       chai.request(server)
-        .get('/auth/login')
+        .post('/auth/login')
+        .send(user1)
         .end((err, res) => {
           expect(res.body).to.have.property('success');
           expect(res.body.success).to.be.true;
@@ -74,57 +73,41 @@ describe('AUTH', () => {
         })
     });
     it('should return an object with success: false property if incorrect credentials are provided', (done) => {
+      const falseUser = {
+        username: 'NotARealUser',
+        password: 'password2',
+        role: 'user'
+      };
+
       chai.request(server)
-        .get('/auth/login')
+        .post('/auth/login')
+        .send(falseUser)
         .end((err, res) => {
           expect(res.body).to.have.property('success');
           expect(res.body.success).to.be.false;
-          done(); 
+          done();
         })
     });
-  })*/
+  })
   /*
     GET /auth/get-user
   */
   describe('GET /auth/get-user', () => {
-    /*
     it('should send back a message and the logged in user if a user is logged in', (done) => {
+      const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
         .send({ username: user1.username, password: user1.password })
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
-          //console.log(res.cookie('session_id'));
 
-          return agent
+          agent
             .get('/auth/get-user')
             .end((err, res) => {
               expect(res.body).to.have.property('message');
               expect(res.body).to.have.property('user');
-              expect(res.body.message).to.equal('A user is logged in');
               expect(res.body.user).to.be.an('object');
-              console.log(res.cookie('session_id'));
-              agent.close(err => {
-                done();
-              })
-            })
-        })
-    });*/
-    it('should send back a message and the logged in user if a user is logged in', (done) => {
-      agent
-        .post('/auth/login')
-        .send({ username: user1.username, password: user1.password })
-        .then(res => {
-          expect(res).to.have.cookie('session_id');
-          //console.log(res.cookie('session_id'));
-
-          return agent.get('/auth/get-user')
-            .then(res => {
-              expect(res.body).to.have.property('message');
-              expect(res.body).to.have.property('user');
               expect(res.body.message).to.equal('A user is logged in');
-              expect(res.body.user).to.be.an('object');
-              //console.log(res.cookie('session_id'));
               agent.close(err => {
                 done();
               })
