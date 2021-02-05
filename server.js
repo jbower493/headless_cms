@@ -11,8 +11,8 @@ const cors = require('cors');
 // import other files
 const db = require('./config/db/db');
 const logger = require('./config/logging/winston');
-const authRouter = require('./routes/cms/authRouter.js');
-const authController = require('./controllers/authController');
+const authRouter = require('./routes/auth/authRouter.js');
+const authController = require('./controllers/auth/authController');
 
 // define app and port
 const app = express();

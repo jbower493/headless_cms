@@ -7,8 +7,8 @@ const db = require('../config/db/db');
 // import models
 const User = require('../models/user');
 
-// import validator
-const validateUser = require('../validators/cms/validateUser');
+// import validators
+const validateUser = require('../validators/auth/validateUser');
 
 module.exports = {
   getUser(req, res, next) {

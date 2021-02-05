@@ -2,7 +2,7 @@
 const expect = require('chai').expect;
 
 // import validators
-const validateUser = require('../../../validators/cms/validateUser');
+const validateUser = require('../../../validators/auth/validateUser');
 
 describe('AUTH VALIDATORS', () => {
   /*
