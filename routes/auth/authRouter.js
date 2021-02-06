@@ -4,21 +4,24 @@ const express = require('express');
 // import controllers
 const authController = require('../../controllers/auth/authController.js');
 
+// import access control methods
+const access = require('../../access_control/accessControl');
+
 // create auth router
 const authRouter = express.Router();
 
 
-// GET /auth
+// GET /auth/get-user
 // ACCESS: public
 authRouter.get('/get-user', authController.getUser);
 
-// POST /login
+// POST /auth/login
 // ACCESS: not logged in, USER
-authRouter.post('/login', authController.login);
+authRouter.post('/login', access.notLoggedIn, authController.login);
 
-// GET /logout
+// GET /auth/logout
 // ACCESS: logged in, USER
-authRouter.get('/logout', authController.logout);
+authRouter.get('/logout', access.loggedInUser, authController.logout);
 
 
 // export auth router for use in server.js

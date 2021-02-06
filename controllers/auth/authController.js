@@ -4,12 +4,6 @@ const bcrypt = require('bcrypt');
 // import db
 const db = require('../../config/db/db');
 
-// import models
-const User = require('../../models/user');
-
-// import validators
-const validateUser = require('../../validators/auth/validateUser');
-
 // import JSON response helper
 const AuthRes = require('../../utils/helpers/authJsonRes');
 

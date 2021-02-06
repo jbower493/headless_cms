@@ -27,7 +27,7 @@ describe('AUTH', () => {
   const user1 = {
     username: 'Bilbo',
     password: 'baggins',
-    role: 'user'
+    role: 'admin'
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
   // runs once after all tests in the main describe block
@@ -81,11 +81,12 @@ describe('AUTH', () => {
             })
         })
     });
-    it('should send back a message and user: null if no user is logged in', (done) => {
+    it('should send back a message no user is logged in and success true if no user is logged in', (done) => {
       chai.request(server)
         .get('/auth/get-user')
         .end((err, res) => {
           expect(res.body.message).to.equal('No user is logged in');
+          expect(res.body.success).to.be.true;
           expect(res.body.user).to.be.null;
           done(); 
         })
@@ -199,11 +200,11 @@ describe('AUTH', () => {
             })
         })
     });
-    it('should return an error if there is no user currently logged in', (done) => {
+    it('should return an error and success: false if there is no user currently logged in', (done) => {
       chai.request(server)
         .get('/auth/logout')
         .end((err, res) => {
-          expect(res.body.error).to.equal('No user is logged in');
+          expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
         })

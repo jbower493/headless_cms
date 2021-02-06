@@ -8,10 +8,13 @@ require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 
+// import routers
+const authRouter = require('./routes/auth/authRouter.js');
+const apiRouter = require('./routes/api/apiRouter');
+
 // import other files
 const db = require('./config/db/db');
 const logger = require('./config/logging/winston');
-const authRouter = require('./routes/auth/authRouter.js');
 const authController = require('./controllers/auth/authController');
 
 // define app and port
@@ -57,8 +60,9 @@ app.use(morgan(morganFormat, { stream: logger.stream }));
 // make logged in user available on req object as req.user
 app.use(authController.deserializeUser);
 
-// mount auth router
+// mount routers
 app.use('/auth', authRouter);
+app.use('/api', apiRouter);
 
 // 404 response
 app.use((req, res, next) => {
