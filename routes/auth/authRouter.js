@@ -2,7 +2,7 @@
 const express = require('express');
 
 // import controllers
-const authController = require('../../controllers/authController.js');
+const authController = require('../../controllers/auth/authController.js');
 
 // create auth router
 const authRouter = express.Router();

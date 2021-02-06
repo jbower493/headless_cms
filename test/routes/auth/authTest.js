@@ -59,37 +59,6 @@ describe('AUTH', () => {
     });
   });
   /*
-    GET /auth/login
-  */
-  describe('GET /auth/login', () => {
-    it('should return an object with success: true property if correct credentials are provided', (done) => {
-      chai.request(server)
-        .post('/auth/login')
-        .send(user1)
-        .end((err, res) => {
-          expect(res.body).to.have.property('success');
-          expect(res.body.success).to.be.true;
-          done(); 
-        })
-    });
-    it('should return an object with success: false property if incorrect credentials are provided', (done) => {
-      const falseUser = {
-        username: 'NotARealUser',
-        password: 'password2',
-        role: 'user'
-      };
-
-      chai.request(server)
-        .post('/auth/login')
-        .send(falseUser)
-        .end((err, res) => {
-          expect(res.body).to.have.property('success');
-          expect(res.body.success).to.be.false;
-          done();
-        })
-    });
-  })
-  /*
     GET /auth/get-user
   */
   describe('GET /auth/get-user', () => {
@@ -97,15 +66,13 @@ describe('AUTH', () => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
-        .send({ username: user1.username, password: user1.password })
+        .send(user1)
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
 
           agent
             .get('/auth/get-user')
             .end((err, res) => {
-              expect(res.body).to.have.property('message');
-              expect(res.body).to.have.property('user');
               expect(res.body.user).to.be.an('object');
               expect(res.body.message).to.equal('A user is logged in');
               agent.close(err => {
@@ -118,14 +85,129 @@ describe('AUTH', () => {
       chai.request(server)
         .get('/auth/get-user')
         .end((err, res) => {
-          expect(res.body).to.have.property('message');
-          expect(res.body).to.have.property('user');
           expect(res.body.message).to.equal('No user is logged in');
           expect(res.body.user).to.be.null;
           done(); 
         })
     });
   });
-  
+  /*
+    POST /auth/login
+  */
+  describe('POST /auth/login', () => {
+    it('should return an object with success: true and user property if correct credentials are provided', (done) => {
+      chai.request(server)
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res.body.success).to.be.true;
+          expect(res.body.user).to.be.an('object');
+          done(); 
+        })
+    });
+    it('should return an error on the response if incorrect credentials are provided', (done) => {
+      const falseUser = {
+        username: 'NotARealUser',
+        password: 'password2',
+        role: 'user'
+      };
+
+      chai.request(server)
+        .post('/auth/login')
+        .send(falseUser)
+        .end((err, res) => {
+          expect(res.body.success).to.be.false;
+          expect(res.body.error).to.equal('Incorrect credentials');
+          done();
+        })
+    });
+    it('should return an error on the response if not all fields are provided', (done) => {
+      const incompleteUser = {
+        username: 'NotARealUser',
+        role: 'user'
+      };
+
+      chai.request(server)
+        .post('/auth/login')
+        .send(incompleteUser)
+        .end((err, res) => {
+          expect(res.body.success).to.be.false;
+          expect(res.body.error).to.equal('Field(s) missing');
+          done();
+        })
+    });
+    it('should return an error on the response if fields are not all strings', (done) => {
+      const notStringsUser = {
+        username: { key: 'value' },
+        password: ['an', 'array'],
+        role: 10
+      };
+
+      chai.request(server)
+        .post('/auth/login')
+        .send(notStringsUser)
+        .end((err, res) => {
+          expect(res.body.success).to.be.false;
+          expect(res.body.error).to.equal('Not strings');
+          done();
+        })
+    });
+    it('should return an error on the response if role is not user or admin', (done) => {
+      const incorrectRoleUser = {
+        username: 'NotARealUser',
+        password: 'password2',
+        role: 'master user'
+      };
+
+      chai.request(server)
+        .post('/auth/login')
+        .send(incorrectRoleUser)
+        .end((err, res) => {
+          expect(res.body.success).to.be.false;
+          expect(res.body.error).to.equal('Incorrect role');
+          done();
+        })
+    });
+  })
+  /*
+    GET /auth/logout
+  */
+  describe('GET /auth/logout', () => {
+    it('should return success: true and a success message, and log the current user out so that req.user is undefined on a subsequent get-user request', (done) => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/auth/logout')
+            .end((err, res) => {
+              expect(res.body.success).to.be.true;
+              expect(res.body.message).to.equal('Successfully logged out');
+
+              agent
+                .get('/auth/get-user')
+                .end((err, res) => {
+                  expect(res.body.message).to.equal('No user is logged in');
+                  expect(res.body.user).to.be.null;
+                  agent.close(err => {
+                    done();
+                  })
+                })
+            })
+        })
+    });
+    it('should return an error if there is no user currently logged in', (done) => {
+      chai.request(server)
+        .get('/auth/logout')
+        .end((err, res) => {
+          expect(res.body.error).to.equal('No user is logged in');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+  });
 
 });

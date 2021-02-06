@@ -62,13 +62,23 @@ app.use('/auth', authRouter);
 
 // 404 response
 app.use((req, res, next) => {
-  res.json({ message: 'No route exists' });
+  res.status(404).json({
+    error: null,
+    message: 'No route exists',
+    success: false,
+    user: null
+  });
 });
 
 // error handler
 app.use((err, req, res, next) => {
   logger.error(`[${datemaker.UTC()}] [${req.method}] [${req.originalUrl}] [${req.ip}] [${err.stack}]`);
-  res.json({ error: true });
+  res.status(500).json({
+    error: 'Server error, apologies',
+    message: '',
+    success: false,
+    user: null
+  });
 });
 
 // run the app
