@@ -132,7 +132,7 @@ describe('API/USERS', () => {
     it('should return an error and success: false if the username is already in use', done => {
       const alreadyTakenUser = {
         username: user1.username,
-        password: 'fre',
+        password: 'fredfred',
         role: 'user'
       };
 
@@ -182,14 +182,14 @@ describe('API/USERS', () => {
         })
     });
   });
-  // /*
-  //   GET /api/user
-  // */
-  // describe('GET /api/user/:id', () => {
-  //   it('', done => {
-
-  //   });
-  // });
+  /*
+    GET /api/user
+  */
+  describe('GET /api/user/:id', () => {
+    it('', done => {
+      
+    });
+  });
   // /*
   //   PUT /api/user
   // */
