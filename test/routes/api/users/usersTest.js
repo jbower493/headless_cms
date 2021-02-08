@@ -38,6 +38,7 @@ describe('API/USERS', () => {
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
 
   before(done => {
+    // insert the admin user before all tests
     db.connect(err => {
       if(err) {
         throw err;
@@ -73,8 +74,8 @@ describe('API/USERS', () => {
     });
   });
   afterEach(done => {
-    // remove non admin user before the next test in order to avoid unwanted side effects
-    db.query('DELETE FROM users WHERE username = ?', [user1.username], (err, results) => {
+    // remove all non admin users before the next test in order to avoid unwanted side effects
+    db.query('DELETE FROM users WHERE role != "admin"', (err, results) => {
       if(err) {
         throw err;
       }
@@ -181,7 +182,38 @@ describe('API/USERS', () => {
             })
         })
     });
+    it('new user should be present in the DB if successful', done => {
+      const newUser = {
+        username: 'Fred',
+        password: 'fredfred',
+        role: 'user'
+      };
+
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post('/api/user')
+            .send(newUser)
+            .end((err, res) => {
+              db.query('SELECT * FROM users WHERE username = ? AND role = ?', [newUser.username, newUser.role], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results.length).to.equal(1);
+                agent.close(err => {
+                  done();
+                })
+              })
+            })
+        })
+    });
   });
+  
   /*
     GET /api/user
   */
