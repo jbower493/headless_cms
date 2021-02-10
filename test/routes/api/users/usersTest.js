@@ -237,8 +237,9 @@ describe('API/USERS', () => {
             agent
               .get(`/api/user/${id}`)
               .end((err, res) => {
-                expect(res.user).to.be.an('object');
-                expect(res.user.username).to.equal(user1.username);
+                expect(res.body.user).to.be.an('object');
+                expect(res.body.user.username).to.equal(user1.username);
+                expect(res.body.success).to.be.true;
                 agent.close(err => {
                   done();
                 })
@@ -257,14 +258,31 @@ describe('API/USERS', () => {
           agent
             .get(`/api/user/0`)
             .end((err, res) => {
-              expect(res.user).to.be.null;
-              expect(res.success).to.be.false;
-              expect(res.error).to.equal('No user exists with this id');
+              expect(res.body.user).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No user exists with this id');
               agent.close(err => {
                 done();
               })
             })
         })
+    });
+    it('should return 403 and an error if not logged in as admin before trying to get a user', done => {
+      db.query('SELECT id FROM users WHERE username = ?', [user1.username], (err, results) => {
+        if(err) {
+          throw err;
+        }
+        const id = results[0].id;
+
+        chai.request(server)
+          .get(`/api/user/${id}`)
+          .end((err, res) => {
+            expect(res).to.have.status(403);
+            expect(res.body.error).to.equal('Access denied');
+            expect(res.body.success).to.be.false;
+            done();
+          })
+      })
     });
   });
   // /*

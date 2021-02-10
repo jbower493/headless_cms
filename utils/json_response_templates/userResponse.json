@@ -1,5 +1,6 @@
 {
   "error": null,
   "message": "Something",
-  "success": true
+  "success": true,
+  "user": { "username": "Something" }
 }

@@ -15,5 +15,9 @@ const apiRouter = express.Router();
 // ACCESS: logged in ADMIN
 apiRouter.post('/user', access.loggedInAdmin, usersController.createUser);
 
+// GET /api/user/:id
+// ACCESS: logged in ADMIN
+apiRouter.get('/user/:id', access.loggedInAdmin, usersController.getUser);
+
 
 module.exports = apiRouter;
