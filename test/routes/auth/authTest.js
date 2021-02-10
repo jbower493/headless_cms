@@ -60,6 +60,7 @@ describe('AUTH', () => {
   });
   /*
     GET /auth/get-user
+    ACCESS: public
   */
   describe('GET /auth/get-user', () => {
     it('should send back a message and the logged in user if a user is logged in', (done) => {
@@ -94,6 +95,7 @@ describe('AUTH', () => {
   });
   /*
     POST /auth/login
+    ACCESS: not logged in USER
   */
   describe('POST /auth/login', () => {
     it('should return an object with success: true and user property if correct credentials are provided', (done) => {
@@ -172,6 +174,7 @@ describe('AUTH', () => {
   })
   /*
     GET /auth/logout
+    ACCESS: logged in USER
   */
   describe('GET /auth/logout', () => {
     it('should return success: true and a success message, and log the current user out so that req.user is undefined on a subsequent get-user request', (done) => {

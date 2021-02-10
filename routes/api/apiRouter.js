@@ -12,7 +12,7 @@ const apiRouter = express.Router();
 
 
 // POST /api/user
-// ACCESS: logged in, admin
+// ACCESS: logged in ADMIN
 apiRouter.post('/user', access.loggedInAdmin, usersController.createUser);
 
 

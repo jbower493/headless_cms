@@ -84,6 +84,7 @@ describe('API/USERS', () => {
   });
   /*
     POST /api/user
+    ACCESS: logged in ADMIN
   */
   describe('POST /api/user', () => {
     it('should return 403 and an error if not logged in as admin before trying to create new user', done => {
@@ -215,11 +216,55 @@ describe('API/USERS', () => {
   });
   
   /*
-    GET /api/user
+    GET /api/user/:id
+    ACCESS: logged in ADMIN
   */
   describe('GET /api/user/:id', () => {
-    it('', done => {
-      
+    it('should return the correct user object if a user exists with the id provided', done => {
+      db.query('SELECT id FROM users WHERE username = ?', [user1.username], (err, results) => {
+        if(err) {
+          throw err;
+        }
+        const id = results[0].id;
+
+        const agent = chai.request.agent(server);
+        agent
+          .post('/auth/login')
+          .send(admin1)
+          .end((err, res) => {
+            expect(res).to.have.cookie('session_id');
+
+            agent
+              .get(`/api/user/${id}`)
+              .end((err, res) => {
+                expect(res.user).to.be.an('object');
+                expect(res.user.username).to.equal(user1.username);
+                agent.close(err => {
+                  done();
+                })
+              })
+          })
+      })
+    });
+    it('should return an error if no user with the provided id exists', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/user/0`)
+            .end((err, res) => {
+              expect(res.user).to.be.null;
+              expect(res.success).to.be.false;
+              expect(res.error).to.equal('No user exists with this id');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
     });
   });
   // /*

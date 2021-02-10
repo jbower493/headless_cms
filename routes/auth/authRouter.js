@@ -12,15 +12,15 @@ const authRouter = express.Router();
 
 
 // GET /auth/get-user
-// ACCESS: public
+// ACCESS: PUBLIC
 authRouter.get('/get-user', authController.getUser);
 
 // POST /auth/login
-// ACCESS: not logged in, USER
+// ACCESS: not logged in USER
 authRouter.post('/login', access.notLoggedIn, authController.login);
 
 // GET /auth/logout
-// ACCESS: logged in, USER
+// ACCESS: logged in USER
 authRouter.get('/logout', access.loggedInUser, authController.logout);
 
 
