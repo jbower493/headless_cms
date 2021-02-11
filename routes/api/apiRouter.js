@@ -19,5 +19,9 @@ apiRouter.post('/user', access.loggedInAdmin, usersController.createUser);
 // ACCESS: logged in ADMIN
 apiRouter.get('/user/:id', access.loggedInAdmin, usersController.getUser);
 
+// PUT /api/user/:id
+// ACCESS: logged in ADMIN
+apiRouter.put('/user/:id', access.loggedInAdmin, usersController.updateUser);
+
 
 module.exports = apiRouter;

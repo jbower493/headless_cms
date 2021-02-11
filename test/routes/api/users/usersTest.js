@@ -37,6 +37,8 @@ describe('API/USERS', () => {
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
 
+  let usersOneId;
+
   before(done => {
     // insert the admin user before all tests
     db.connect(err => {
@@ -70,7 +72,13 @@ describe('API/USERS', () => {
       if(err) {
         throw err;
       }
-      done();
+      db.query('SELECT id FROM users WHERE username = ?', [user1.username], (err, results) => {
+        if(err) {
+          throw err;
+        }
+        userOneId = results[0].id;
+        done();
+      });
     });
   });
   afterEach(done => {
@@ -87,13 +95,13 @@ describe('API/USERS', () => {
     ACCESS: logged in ADMIN
   */
   describe('POST /api/user', () => {
-    it('should return 403 and an error if not logged in as admin before trying to create new user', done => {
-      const newUser = {
-        username: 'Fred',
-        password: 'fredfred',
-        role: 'user'
-      };
+    const newUser = {
+      username: 'Fred',
+      password: 'fredfred',
+      role: 'user'
+    };
 
+    it('should return 403 and an error if not logged in as admin before trying to create new user', done => {
       chai.request(server)
         .post('/api/user')
         .send(newUser)
@@ -102,6 +110,32 @@ describe('API/USERS', () => {
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
+        })
+    });
+    it('should return an error and success: false if the username is already in use', done => {
+      const alreadyTakenUser = {
+        username: user1.username,
+        password: 'fredfred',
+        role: 'user'
+      };
+
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post('/api/user')
+            .send(alreadyTakenUser)
+            .end((err, res) => {
+              expect(res.body.error).to.equal('Username already in use');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
         })
     });
     it('should return an error and success: false if the new user object does not pass validation', done => {
@@ -131,39 +165,7 @@ describe('API/USERS', () => {
             })
         })
     });
-    it('should return an error and success: false if the username is already in use', done => {
-      const alreadyTakenUser = {
-        username: user1.username,
-        password: 'fredfred',
-        role: 'user'
-      };
-
-      const agent = chai.request.agent(server)
-      agent
-        .post('/auth/login')
-        .send(admin1)
-        .end((err, res) => {
-          expect(res).to.have.cookie('session_id');
-
-          agent
-            .post('/api/user')
-            .send(alreadyTakenUser)
-            .end((err, res) => {
-              expect(res.body.error).to.equal('Username already in use');
-              expect(res.body.success).to.be.false;
-              agent.close(err => {
-                done();
-              })
-            })
-        })
-    });
     it('should return success: true and message: User successfully created if successful', done => {
-      const newUser = {
-        username: 'Fred',
-        password: 'fredfred',
-        role: 'user'
-      };
-
       const agent = chai.request.agent(server)
       agent
         .post('/auth/login')
@@ -184,12 +186,6 @@ describe('API/USERS', () => {
         })
     });
     it('new user should be present in the DB if successful', done => {
-      const newUser = {
-        username: 'Fred',
-        password: 'fredfred',
-        role: 'user'
-      };
-
       const agent = chai.request.agent(server)
       agent
         .post('/auth/login')
@@ -220,32 +216,15 @@ describe('API/USERS', () => {
     ACCESS: logged in ADMIN
   */
   describe('GET /api/user/:id', () => {
-    it('should return the correct user object if a user exists with the id provided', done => {
-      db.query('SELECT id FROM users WHERE username = ?', [user1.username], (err, results) => {
-        if(err) {
-          throw err;
-        }
-        const id = results[0].id;
-
-        const agent = chai.request.agent(server);
-        agent
-          .post('/auth/login')
-          .send(admin1)
-          .end((err, res) => {
-            expect(res).to.have.cookie('session_id');
-
-            agent
-              .get(`/api/user/${id}`)
-              .end((err, res) => {
-                expect(res.body.user).to.be.an('object');
-                expect(res.body.user.username).to.equal(user1.username);
-                expect(res.body.success).to.be.true;
-                agent.close(err => {
-                  done();
-                })
-              })
-          })
-      })
+    it('should return 403 and an error if not logged in as admin before trying to get a user', done => {
+      chai.request(server)
+        .get(`/api/user/${userOneId}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
     });
     it('should return an error if no user with the provided id exists', done => {
       const agent = chai.request.agent(server);
@@ -267,32 +246,145 @@ describe('API/USERS', () => {
             })
         })
     });
-    it('should return 403 and an error if not logged in as admin before trying to get a user', done => {
-      db.query('SELECT id FROM users WHERE username = ?', [user1.username], (err, results) => {
-        if(err) {
-          throw err;
-        }
-        const id = results[0].id;
+    it('should return the correct user object if a user exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-        chai.request(server)
-          .get(`/api/user/${id}`)
-          .end((err, res) => {
-            expect(res).to.have.status(403);
-            expect(res.body.error).to.equal('Access denied');
-            expect(res.body.success).to.be.false;
-            done();
-          })
-      })
+          agent
+            .get(`/api/user/${userOneId}`)
+            .end((err, res) => {
+              expect(res.body.user).to.be.an('object');
+              expect(res.body.user.username).to.equal(user1.username);
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
     });
   });
-  // /*
-  //   PUT /api/user
-  // */
-  // describe('PUT /api/user/:id', () => {
-  //   it('', done => {
 
-  //   });
-  // });
+  /*
+    PUT /api/user
+    ACCESS: logged in ADMIN
+  */
+  describe('PUT /api/user/:id', () => {
+    const alteredUser = {
+      username: 'Fred',
+      password: 'fredfred',
+      role: 'user'
+    };
+
+    it('should return 403 and an error if not logged in as admin before trying to alter a user', done => {
+      chai.request(server)
+        .put(`/api/user/${userOneId}`)
+        .send(alteredUser)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return an error if no user with the provided id exists', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/user/0`)
+            .send(alteredUser)
+            .end((err, res) => {
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No user exists with this id');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return an error and success: false if the altered user object does not pass validation', done => {
+      const invalidUser = {
+        username: 'Fred',
+        password: 'fre',
+        role: 'martian'
+      };
+
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/user/${userOneId}`)
+            .send(invalidUser)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.be.a('string');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: User successfully updated if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/user/${userOneId}`)
+            .send(alteredUser)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('User successfully updated');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('user with updated id in the DB should have fields matching the altered user if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/user/${userOneId}`)
+            .send(alteredUser)
+            .end((err, res) => {
+              db.query('SELECT * FROM users WHERE id = ?', [userOneId], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results[0].username).to.equal(alteredUser.username);
+                expect(bcrypt.compareSync(alteredUser.password, results[0].password)).to.be.true;
+                expect(results[0].role).to.equal(alteredUser.role);
+                agent.close(err => {
+                  done();
+                })
+              })
+            })
+        })
+    });
+  });
+
   // /*
   //   DELETE /api/user
   // */

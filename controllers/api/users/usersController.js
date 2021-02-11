@@ -52,5 +52,28 @@ module.exports = {
         res.json(new UserRes(null, 'User successfully fetched', true, results[0]));
       }
     });
+  },
+
+  updateUser(req, res, next) {
+    const { username, password, role } = req.body;
+
+    const alteredUser = new User(username, password, role);
+    const validated = validateUser(alteredUser);
+
+    if(validated !== true) {
+      return res.status(400).json(new UserRes(validated, '', false, null));
+    }
+
+    const hash = bcrypt.hashSync(password, 10);
+
+    db.query('UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?', [username, hash, role, req.params.id], (err, results) => {
+      if(err) {
+        return next(err);
+      }
+      if(results.affectedRows === 0) {
+        return res.json(new UserRes('No user exists with this id', '', false, null));
+      }
+      res.json(new UserRes(null, 'User successfully updated', true, null));
+    });
   }
 };
