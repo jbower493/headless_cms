@@ -388,11 +388,79 @@ describe('API/USERS', () => {
   // /*
   //   DELETE /api/user
   // */
-  // describe('DELETE /api/user/:id', () => {
-  //   it('', done => {
+  describe('DELETE /api/user/:id', () => {
+    it('should return 403 and an error if not logged in as admin before trying to delete a user', done => {
+      chai.request(server)
+        .delete(`/api/user/${userOneId}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return an error if no user with the provided id exists', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .delete(`/api/user/0`)
+            .end((err, res) => {
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No user exists with this id');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: User successfully deleted if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/user/${userOneId}`)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('User successfully deleted');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('user with deleted id should no longer be present in the DB if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/user/${userOneId}`)
+            .end((err, res) => {
+              db.query('SELECT * FROM users WHERE id = ?', [userOneId], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results.length).to.equal(0);
+                agent.close(err => {
+                  done();
+                })
+              })
+            })
+        })
+    });
+  });
 
   // /*
   //   GET /api/users
