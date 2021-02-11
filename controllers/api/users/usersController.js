@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const db = require('../../../config/db/db');
 
 // import validators
-const validateUser = require('../../../validators/auth/validateUser');
+const validateUser = require('../../../validators/validateUser');
 
 // import JSON response helper
 const UserRes = require('../../../utils/helpers/userJsonRes');
@@ -74,6 +74,32 @@ module.exports = {
         return res.json(new UserRes('No user exists with this id', '', false, null));
       }
       res.json(new UserRes(null, 'User successfully updated', true, null));
+    });
+  },
+
+  deleteUser(req, res, next) {
+    db.query('DELETE FROM users WHERE id = ?', [req.params.id], (err, results) => {
+      if(err) {
+        return next(err);
+      }
+      if(results.affectedRows === 0) {
+        return res.json(new UserRes('No user exists with this id', '', false, null));
+      }
+      res.json(new UserRes(null, 'User successfully deleted', true, null));
+    });
+  },
+
+  getAllUsers(req, res, next) {
+    db.query('SELECT id, username, role FROM users WHERE role = "user"', (err, results) => {
+      if(err) {
+        return next(err);
+      }
+      res.json({
+        error: null,
+        message: 'All users successfully fetched',
+        success: true,
+        users: results
+      });
     });
   }
 };

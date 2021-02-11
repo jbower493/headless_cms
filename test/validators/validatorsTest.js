@@ -2,9 +2,9 @@
 const expect = require('chai').expect;
 
 // import validators
-const validateUser = require('../../../validators/auth/validateUser');
+const validateUser = require('../../validators/validateUser');
 
-describe('AUTH VALIDATORS', () => {
+describe('VALIDATORS', () => {
   /*
     Validate User method
   */

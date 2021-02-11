@@ -48,11 +48,12 @@ describe('API/USERS', () => {
       db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [admin1.username, admin1Hash, admin1.role], (err, results) => {
         if(err) {
           throw err;
-        }
+        }console.log('inserted admin')
         done();
       });
     });
   });
+  // clear all users after all tests
   after(done => {
     db.query('DELETE FROM users', (err, results) => {
       if(err) {
@@ -61,13 +62,13 @@ describe('API/USERS', () => {
       db.end(err => {
         if(err) {
           throw err;
-        }
+        }console.log('cleared admin')
         done();
       });
     });
   });
+  // add a non admin user to the db before each it block
   beforeEach(done => {
-    // add a non admin user to the db before each describe block
     db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [user1.username, user1Hash, user1.role], (err, results) => {
       if(err) {
         throw err;
@@ -81,8 +82,8 @@ describe('API/USERS', () => {
       });
     });
   });
+  // remove all non admin users before the next it block in order to avoid unwanted side effects
   afterEach(done => {
-    // remove all non admin users before the next test in order to avoid unwanted side effects
     db.query('DELETE FROM users WHERE role != "admin"', (err, results) => {
       if(err) {
         throw err;
@@ -269,7 +270,7 @@ describe('API/USERS', () => {
   });
 
   /*
-    PUT /api/user
+    PUT /api/user/:id
     ACCESS: logged in ADMIN
   */
   describe('PUT /api/user/:id', () => {
@@ -385,9 +386,10 @@ describe('API/USERS', () => {
     });
   });
 
-  // /*
-  //   DELETE /api/user
-  // */
+  /*
+    DELETE /api/user/:id
+    ACCESS: logged in ADMIN
+  */
   describe('DELETE /api/user/:id', () => {
     it('should return 403 and an error if not logged in as admin before trying to delete a user', done => {
       chai.request(server)
@@ -462,20 +464,93 @@ describe('API/USERS', () => {
     });
   });
 
-  // /*
-  //   GET /api/users
-  // */
-  // describe('GET /api/users', () => {
-  //   it('', done => {
+  /*
+    GET /api/users
+    ACCESS: logged in ADMIN
+  */
+  describe('GET /api/users', () => {
+    const user2 = {
+      username: 'Jane',
+      password: 'janedoe',
+      role: 'user'
+    };
+    const user2Hash = bcrypt.hashSync(user1.password, saltRounds);
 
-  //   });
-  // });
+    // runs before all it blocks in this describe block
+    beforeEach(done => {
+      db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [user2.username, user2Hash, user2.role], (err, results) => {
+        if(err) {
+          throw err;
+        }
+        done();
+      });
+    });
+
+    it('should return 403 and an error if not logged in as admin before trying to get all users', done => {
+      chai.request(server)
+        .get('/api/users')
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return an array of all users (with the role "user") if successful', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/api/users')
+            .end((err, res) => {
+              expect(res.body.success).to.be.true;
+              expect(res.body.users).to.be.an('array');
+              expect(res.body.users[0].username).to.equal(user1.username);
+              expect(res.body.users[1].username).to.equal(user2.username);
+              agent.close(err => {
+                done();
+              })
+            })
+        });
+    });
+    it('should NOT send back the password hash as part of the user object', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/api/users')
+            .end((err, res) => {
+              expect(res.body.success).to.be.true;
+              expect(res.body.users[0].password).to.be.undefined;
+              expect(res.body.users[1].password).to.be.undefined;
+              agent.close(err => {
+                done();
+              })
+            })
+        });
+    });
+  });
   // /*
   //   DELETE /api/users
   // */
   // describe('GET /api/users', () => {
-  //   it('', done => {
-
+  //   it('should return 403 and an error if not logged in as admin before trying to delete all users', done => {
+  //     chai.request(server)
+  //       .delete('/api/users')
+  //       .end((err, res) => {
+  //         expect(res).to.have.status(403);
+  //         expect(res.body.error).to.equal('Access denied');
+  //         expect(res.body.success).to.be.false;
+  //         done();
+  //       })
   //   });
   // });
 
