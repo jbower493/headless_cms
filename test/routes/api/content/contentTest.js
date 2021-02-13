@@ -22,7 +22,7 @@
 // // use chai http
 // chai.use(chaiHttp);
 
-// describe('API/RESOURCES', () => {
+// describe('API/CONTENT', () => {
 //   before(done => {
 
 //   });
@@ -36,7 +36,7 @@
 
 //   });
 //   /*
-//     POST /api/resource
+//     POST /api/content
 //   */
 //   describe('POST /api/resource', () => {
 //     it('', done => {
@@ -44,7 +44,7 @@
 //     });
 //   });
 //   /*
-//     GET /api/resource
+//     GET /api/content
 //   */
 //   describe('GET /api/resource/:id', () => {
 //     it('', done => {
@@ -52,7 +52,7 @@
 //     });
 //   });
 //   /*
-//     PUT /api/resource
+//     PUT /api/content
 //   */
 //   describe('PUT /api/resource/:id', () => {
 //     it('', done => {
@@ -60,7 +60,7 @@
 //     });
 //   });
 //   /*
-//     DELETE /api/resource
+//     DELETE /api/content
 //   */
 //   describe('DELETE /api/resource/:id', () => {
 //     it('', done => {
@@ -69,7 +69,7 @@
 //   });
 
 //   /*
-//     GET /api/resources
+//     GET /api/content
 //   */
 //   describe('GET /api/resources', () => {
 //     it('', done => {
@@ -77,7 +77,7 @@
 //     });
 //   });
 //   /*
-//     DELETE /api/resources
+//     DELETE /api/content
 //   */
 //   describe('GET /api/resources', () => {
 //     it('', done => {
