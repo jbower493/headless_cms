@@ -26,18 +26,36 @@ describe('API/USERS', () => {
   const admin1 = {
     username: 'Bilbo',
     password: 'baggins',
-    role: 'admin'
+    role: 'admin',
+  };
+  const adminPrivileges = {
+    "create": true,
+    "read own": true,
+    "read any": true,
+    "update own": true,
+    "update any": true,
+    "delete own": true,
+    "delete any": true
   };
   const admin1Hash = bcrypt.hashSync(admin1.password, saltRounds);
 
   const user1 = {
     username: 'John',
     password: 'johndoe',
-    role: 'user'
+    role: 'user',
+    privileges: {
+      "create": true,
+      "read own": true,
+      "read any": true,
+      "update own": true,
+      "update any": false,
+      "delete own": true,
+      "delete any": false
+    }
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
 
-  let usersOneId;
+  let userOneId;
 
   before(done => {
     // insert the admin user before all tests
@@ -45,10 +63,10 @@ describe('API/USERS', () => {
       if(err) {
         throw err;
       }
-      db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [admin1.username, admin1Hash, admin1.role], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [admin1.username, admin1Hash, admin1.role, JSON.stringify(adminPrivileges)], (err, results) => {
         if(err) {
           throw err;
-        }console.log('inserted admin')
+        }
         done();
       });
     });
@@ -62,14 +80,14 @@ describe('API/USERS', () => {
       db.end(err => {
         if(err) {
           throw err;
-        }console.log('cleared admin')
+        }
         done();
       });
     });
   });
   // add a non admin user to the db before each it block
   beforeEach(done => {
-    db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [user1.username, user1Hash, user1.role], (err, results) => {
+    db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1.privileges)], (err, results) => {
       if(err) {
         throw err;
       }
@@ -99,7 +117,16 @@ describe('API/USERS', () => {
     const newUser = {
       username: 'Fred',
       password: 'fredfred',
-      role: 'user'
+      role: 'user',
+      privileges: {
+        "create": true,
+        "read own": true,
+        "read any": true,
+        "update own": true,
+        "update any": false,
+        "delete own": true,
+        "delete any": false
+      }
     };
 
     it('should return 403 and an error if not logged in as admin before trying to create new user', done => {
@@ -117,7 +144,16 @@ describe('API/USERS', () => {
       const alreadyTakenUser = {
         username: user1.username,
         password: 'fredfred',
-        role: 'user'
+        role: 'user',
+        privileges: {
+          "create": true,
+          "read own": true,
+          "read any": true,
+          "update own": true,
+          "update any": false,
+          "delete own": true,
+          "delete any": false
+        }
       };
 
       const agent = chai.request.agent(server)
@@ -143,7 +179,16 @@ describe('API/USERS', () => {
       const invalidUser = {
         username: 'Fred',
         password: 'fre',
-        role: 'user'
+        role: 'user',
+        privileges: {
+          "create": true,
+          "read own": true,
+          "read any": true,
+          "update own": true,
+          "update any": false,
+          "delete own": true,
+          "delete any": false
+        }
       };
 
       const agent = chai.request.agent(server)
@@ -186,7 +231,7 @@ describe('API/USERS', () => {
             })
         })
     });
-    it('new user should be present in the DB if successful', done => {
+    it('new user should be present in the DB if successful and properties should be correct', done => {
       const agent = chai.request.agent(server)
       agent
         .post('/auth/login')
@@ -203,6 +248,9 @@ describe('API/USERS', () => {
                   throw err;
                 }
                 expect(results.length).to.equal(1);
+                expect(results[0].username).to.equal(newUser.username);
+                expect(results[0].role).to.equal(newUser.role);
+                expect(results[0].privileges).to.equal(JSON.stringify(newUser.privileges));
                 agent.close(err => {
                   done();
                 })
@@ -260,6 +308,8 @@ describe('API/USERS', () => {
             .end((err, res) => {
               expect(res.body.user).to.be.an('object');
               expect(res.body.user.username).to.equal(user1.username);
+              expect(res.body.user.role).to.equal(user1.role);
+              expect(JSON.stringify(res.body.user.privileges)).to.equal(JSON.stringify(user1.privileges));
               expect(res.body.success).to.be.true;
               agent.close(err => {
                 done();
@@ -277,7 +327,16 @@ describe('API/USERS', () => {
     const alteredUser = {
       username: 'Fred',
       password: 'fredfred',
-      role: 'user'
+      role: 'user',
+      privileges: {
+        "create": true,
+        "read own": true,
+        "read any": true,
+        "update own": true,
+        "update any": true,
+        "delete own": true,
+        "delete any": false
+      }
     };
 
     it('should return 403 and an error if not logged in as admin before trying to alter a user', done => {
@@ -315,7 +374,8 @@ describe('API/USERS', () => {
       const invalidUser = {
         username: 'Fred',
         password: 'fre',
-        role: 'martian'
+        role: 'martian',
+        privileges: 'Very very privileged'
       };
 
       const agent = chai.request.agent(server)
@@ -377,6 +437,7 @@ describe('API/USERS', () => {
                 expect(results[0].username).to.equal(alteredUser.username);
                 expect(bcrypt.compareSync(alteredUser.password, results[0].password)).to.be.true;
                 expect(results[0].role).to.equal(alteredUser.role);
+                expect(results[0].privileges).to.equal(JSON.stringify(alteredUser.privileges));
                 agent.close(err => {
                   done();
                 })
@@ -472,13 +533,22 @@ describe('API/USERS', () => {
     const user2 = {
       username: 'Jane',
       password: 'janedoe',
-      role: 'user'
+      role: 'user',
+      privileges: {
+        "create": true,
+        "read own": true,
+        "read any": true,
+        "update own": true,
+        "update any": false,
+        "delete own": true,
+        "delete any": false
+      }
     };
     const user2Hash = bcrypt.hashSync(user1.password, saltRounds);
 
     // runs before all it blocks in this describe block
     beforeEach(done => {
-      db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [user2.username, user2Hash, user2.role], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user2.username, user2Hash, user2.role, JSON.stringify(user2.privileges)], (err, results) => {
         if(err) {
           throw err;
         }
@@ -509,6 +579,7 @@ describe('API/USERS', () => {
             .end((err, res) => {
               expect(res.body.success).to.be.true;
               expect(res.body.users).to.be.an('array');
+              expect(res.body.users.length).to.equal(2);
               expect(res.body.users[0].username).to.equal(user1.username);
               expect(res.body.users[1].username).to.equal(user2.username);
               agent.close(err => {
@@ -538,20 +609,5 @@ describe('API/USERS', () => {
         });
     });
   });
-  // /*
-  //   DELETE /api/users
-  // */
-  // describe('GET /api/users', () => {
-  //   it('should return 403 and an error if not logged in as admin before trying to delete all users', done => {
-  //     chai.request(server)
-  //       .delete('/api/users')
-  //       .end((err, res) => {
-  //         expect(res).to.have.status(403);
-  //         expect(res.body.error).to.equal('Access denied');
-  //         expect(res.body.success).to.be.false;
-  //         done();
-  //       })
-  //   });
-  // });
 
 });

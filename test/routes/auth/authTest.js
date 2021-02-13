@@ -24,6 +24,16 @@ chai.use(chaiHttp);
 
 // parent block
 describe('AUTH', () => {
+  const adminPrivileges = {
+    "create": "yes",
+    "read own": "yes",
+    "read any": "yes",
+    "update own": "yes",
+    "update any": "yes",
+    "delete own": "yes",
+    "delete any": "yes"
+  };
+
   const user1 = {
     username: 'Bilbo',
     password: 'baggins',
@@ -36,7 +46,7 @@ describe('AUTH', () => {
       if(err) {
         throw err;
       }
-      db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [user1.username, user1Hash, user1.role], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(adminPrivileges)], (err, results) => {
         if(err) {
           throw err;
         }

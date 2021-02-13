@@ -21,5 +21,9 @@ module.exports = {
     } else {
       res.status(403).json({ error: "Access denied", success: false });
     }
+  },
+
+  authenticatedUser(req, res, next) {
+    // this is only for the read routes as authentication could be via a token instead of being logged in
   }
 };

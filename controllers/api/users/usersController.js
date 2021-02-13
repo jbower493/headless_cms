@@ -15,9 +15,9 @@ const User = require('../../../models/User');
 
 module.exports = {
   createUser(req, res, next) {
-    const { username, password, role } = req.body;
+    const { username, password, role, privileges } = req.body;
 
-    const newUser = new User(username, password, role);
+    const newUser = new User(username, password, role, privileges);
     const validated = validateUser(newUser);
 
     if(validated !== true) {
@@ -32,7 +32,7 @@ module.exports = {
         return res.json(new UserRes('Username already in use', '', false, null));
       }
       const hash = bcrypt.hashSync(password, 10);
-      db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hash, role], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [username, hash, role, JSON.stringify(privileges)], (err, results) => {
         if(err) {
           return next(err);
         }
@@ -42,22 +42,23 @@ module.exports = {
   },
 
   getUser(req, res, next) {    
-    db.query('SELECT id, username, role FROM users WHERE id = ?', [req.params.id], (err, results) => {
+    db.query('SELECT id, username, role, privileges FROM users WHERE id = ?', [req.params.id], (err, results) => {
       if(err) {
         return next(err);
       }
       if(results.length === 0) {
         res.json(new UserRes('No user exists with this id', '', false, null));
       } else {
+        results[0].privileges = JSON.parse(results[0].privileges);
         res.json(new UserRes(null, 'User successfully fetched', true, results[0]));
       }
     });
   },
 
   updateUser(req, res, next) {
-    const { username, password, role } = req.body;
+    const { username, password, role, privileges } = req.body;
 
-    const alteredUser = new User(username, password, role);
+    const alteredUser = new User(username, password, role, privileges);
     const validated = validateUser(alteredUser);
 
     if(validated !== true) {
@@ -66,7 +67,7 @@ module.exports = {
 
     const hash = bcrypt.hashSync(password, 10);
 
-    db.query('UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?', [username, hash, role, req.params.id], (err, results) => {
+    db.query('UPDATE users SET username = ?, password = ?, role = ?, privileges = ? WHERE id = ?', [username, hash, role, JSON.stringify(privileges), req.params.id], (err, results) => {
       if(err) {
         return next(err);
       }

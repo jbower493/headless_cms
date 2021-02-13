@@ -1,5 +1,5 @@
 require('dotenv').config();
-const db = require('../config/db/dbTest');
+const db = require('../../config/db/dbTest');
 const sql = require('./sqlStatements');
 
 db.connect((err) => {
