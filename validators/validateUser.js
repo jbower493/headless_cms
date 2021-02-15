@@ -3,6 +3,10 @@ module.exports = (user) => {
     return 'Field(s) missing';
   }
 
+  if(Object.keys(user).length > 4) {
+    return 'Too many fields';
+  }
+
   if(typeof user.username !== 'string') {
     return 'Username not string';
   }
