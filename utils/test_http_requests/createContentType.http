@@ -1,0 +1,28 @@
+POST http://localhost:8080/api/content-type HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "donkey",
+  "fields": [
+    {
+      "name": "name",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "age",
+      "type": "int",
+      "required": true
+    },
+    {
+      "name": "owner",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "hair_color",
+      "type": "text",
+      "required": false
+    }
+  ]
+}

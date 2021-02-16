@@ -25,7 +25,7 @@ const contentTypeQuery = require('../../../../utils/helpers/query_builders/conte
 // use chai http
 chai.use(chaiHttp);
 
-describe('API/CONTENT_TYPES', () => {
+describe('API/CONTENT-TYPES', () => {
   const admin1 = {
     username: 'Bilbo',
     password: 'baggins',
@@ -285,6 +285,84 @@ describe('API/CONTENT_TYPES', () => {
                   done();
                 })
               });
+            })
+        })
+    });
+  });
+  /*
+  GET /api/content-type/:name
+  ACCESS: logged in USER
+  */
+  describe('GET /api/content-type/:name', () => {
+    it('should return 403 and an error if not logged in as a user before trying to view a content type', done => {
+      chai.request(server)
+        .get(`/api/content-type/${contentType1.name}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return error if provided content type name in not valid', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/api/content-type/Hello1066!')
+            .end((err, res) => {
+              expect(res.body.contentType).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('Name parameter must contain only lowercase letters or underscores');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content type exists with the name provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/api/content-type/flamingo')
+            .end((err, res) => {
+              expect(res.body.contentType).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content type with that name exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return the correct content type object if one exists with the name provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content-type/${contentType1.name}`)
+            .end((err, res) => {
+              expect(res.body.contentType).to.be.an('object');
+              expect(res.body.contentType.name).to.equal(contentType1.name);
+              expect(res.body.contentType.fields[0].name).to.equal(contentType1.fields[0].name);
+              expect(res.body.success).to.be.true;
+              expect(res.body.message).to.equal('Content Type successfully fetched');
+              agent.close(err => {
+                done();
+              })
             })
         })
     });

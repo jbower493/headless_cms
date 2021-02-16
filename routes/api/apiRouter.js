@@ -45,5 +45,9 @@ Content Type routes
 // ACCESS: logged in admin
 apiRouter.post('/content-type', access.loggedInAdmin, contentTypesController.createContentType);
 
+// GET /api/content-type/:name
+// ACCESS: logged in USER
+apiRouter.get('/content-type/:name', access.loggedInUser, contentTypesController.getUser);
+
 
 module.exports = apiRouter;
