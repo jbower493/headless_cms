@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "set NODE_ENV=test&&mocha --exit --recursive",
+    "single-test": "set NODE_ENV=test&&mocha --exit ./test/routes/api/content/contentTypesTest.js",
     "start": "set NODE_ENV=dev&&node server.js",
     "dev": "set NODE_ENV=dev&&nodemon server.js",
     "seed-test-db": "node ./utils/seed/seedTestDb.js",

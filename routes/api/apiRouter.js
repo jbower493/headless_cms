@@ -3,6 +3,7 @@ const express = require('express');
 
 // import controllers
 const usersController = require('../../controllers/api/users/usersController.js');
+const contentTypesController = require('../../controllers/api/content/contentTypesController.js');
 
 // import access control methods
 const access = require('../../access_control/accessControl');
@@ -11,7 +12,9 @@ const access = require('../../access_control/accessControl');
 const apiRouter = express.Router();
 
 
-// User routes
+/*
+User routes
+*/
 
 // POST /api/user
 // ACCESS: logged in ADMIN
@@ -34,7 +37,13 @@ apiRouter.delete('/user/:id', access.loggedInAdmin, usersController.deleteUser);
 apiRouter.get('/users', access.loggedInAdmin, usersController.getAllUsers);
 
 
-// Resources routes
+/*
+Content Type routes
+*/
+
+// POST /api/content-type
+// ACCESS: logged in admin
+apiRouter.post('/content-type', access.loggedInAdmin, contentTypesController.createContentType);
 
 
 module.exports = apiRouter;

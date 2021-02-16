@@ -1,7 +1,6 @@
 module.exports = class ContentType {
-  constructor(name, description, fields) {
+  constructor(name, fields) {
     this.name = name;
-    this.description = description;
     this.fields = fields;
   }
 };

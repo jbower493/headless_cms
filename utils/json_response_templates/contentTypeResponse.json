@@ -1,0 +1,15 @@
+{
+  "error": null,
+  "message": "something",
+  "success": true,
+  "contentType": {
+    "name": "something",
+    "fields": [
+      {
+        "name": "field_name",
+        "type": "text",
+        "required": true
+      }
+    ]
+  }
+}

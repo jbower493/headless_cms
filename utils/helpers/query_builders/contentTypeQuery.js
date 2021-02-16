@@ -13,6 +13,16 @@ module.exports = {
   },
 
   dropTable(contentTypeName) {
-    return `DROP TABLE ${contentTypeName}s`;
+    if(typeof contentTypeName !== 'string') {
+      const tables = contentTypeName.map(name => {
+        if(contentTypeName.indexOf(name) === contentTypeName.length - 1) {
+          return name + 's';
+        } else {
+          return `${name}s,`;
+        }
+      });
+      return `DROP TABLE IF EXISTS ${tables.join('')}`;
+    }
+    return `DROP TABLE IF EXISTS ${contentTypeName}s`;
   }
 };

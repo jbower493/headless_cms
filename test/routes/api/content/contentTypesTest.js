@@ -63,6 +63,27 @@ describe('API/CONTENT_TYPES', () => {
     ]
   };
 
+  const newContentType = {
+    name: 'park',
+    fields: [
+      {
+        name: 'park_name',
+        type: 'text',
+        required: true
+      },
+      {
+        name: 'suburb',
+        type: 'text',
+        required: true
+      },
+      {
+        name: 'no_of_barbeques',
+        type: 'int',
+        required: true
+      }
+    ]
+  };
+
   // insert the admin user before all tests
   before(done => {
     db.connect(err => {
@@ -102,7 +123,7 @@ describe('API/CONTENT_TYPES', () => {
   });
   // remove post content type after every it block so it can be put back to its original state by the beforeEach hook
   afterEach(done => {
-    db.query(contentTypeQuery.dropTable(contentType1.name), (err, results) => {
+    db.query(contentTypeQuery.dropTable([contentType1.name, newContentType.name]), (err, results) => {
       if(err) {
         throw err;
       }
@@ -114,27 +135,6 @@ describe('API/CONTENT_TYPES', () => {
   ACCESS: logged in ADMIN
   */
   describe('POST /api/content-type', () => {
-    const newContentType = {
-      name: 'park',
-      fields: [
-        {
-          name: 'park_name',
-          type: 'text',
-          required: true
-        },
-        {
-          name: 'suburb',
-          type: 'text',
-          required: true
-        },
-        {
-          name: 'no_of_barbeques',
-          type: 'int',
-          required: true
-        }
-      ]
-    };
-
     it('should return 403 and an error if not logged in as admin before trying to create a new content type', done => {
       chai.request(server)
         .post('/api/content-type')
@@ -146,7 +146,7 @@ describe('API/CONTENT_TYPES', () => {
           done();
         })
     });
-    it('should return an error and success: false if the username is already in use', done => {
+    it('should return an error and success: false if a content type already exists with that name', done => {
       const agent = chai.request.agent(server)
       agent
         .post('/auth/login')
@@ -166,7 +166,7 @@ describe('API/CONTENT_TYPES', () => {
             })
         })
     });
-    it('should return an error and success: false if the new user object does not pass validation', done => {
+    it('should return an error and success: false if the new content type object does not pass validation', done => {
       const invalidContentType = {
         name: 'double"quotes"in-name',
         extraProp: true,
@@ -277,9 +277,8 @@ describe('API/CONTENT_TYPES', () => {
               db.query('SELECT * FROM parks', (err, results) => {
                 if(err) {
                   if(err.code !== 'ER_NO_SUCH_TABLE') {
-                    console.log('Error is something other than table does not exist!');
+                    throw err;
                   }
-                  throw err;
                 }
                 expect(err).to.be.null;
                 agent.close(err => {

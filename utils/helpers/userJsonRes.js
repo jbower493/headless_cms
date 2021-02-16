@@ -1,4 +1,4 @@
-module.exports = class JsonRes {
+module.exports = class UserJsonRes {
   constructor(error, message, success, user) {
     this.error = error;
     this.message = message;
