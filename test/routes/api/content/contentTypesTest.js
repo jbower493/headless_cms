@@ -151,7 +151,7 @@ describe('API/CONTENT-TYPES', () => {
   ACCESS: logged in ADMIN
   */
   describe('POST /api/content-type', () => {
-    it('should return 403 and an error if not logged in as admin before trying to create a new content type', done => {
+    it('should return 403 and an error if not logged in before trying to create a new content type', done => {
       chai.request(server)
         .post('/api/content-type')
         .send(newContentType)
@@ -160,6 +160,27 @@ describe('API/CONTENT-TYPES', () => {
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
+        })
+    });
+    it('should return 403 and an error if logged in as a regular user before trying to create a new content type', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post('/api/content-type')
+            .send(newContentType)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('Access denied');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
         })
     });
     it('should return an error and success: false if a content type already exists with that name', done => {

@@ -24,20 +24,20 @@ chai.use(chaiHttp);
 
 // parent block
 describe('AUTH', () => {
-  const adminPrivileges = {
+  const user1Privileges = {
     "create": "yes",
     "read own": "yes",
     "read any": "yes",
     "update own": "yes",
-    "update any": "yes",
+    "update any": "no",
     "delete own": "yes",
-    "delete any": "yes"
+    "delete any": "no"
   };
 
   const user1 = {
     username: 'Bilbo',
     password: 'baggins',
-    role: 'admin'
+    role: 'user'
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
   // runs once after all tests in the main describe block
@@ -46,7 +46,7 @@ describe('AUTH', () => {
       if(err) {
         throw err;
       }
-      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(adminPrivileges)], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results) => {
         if(err) {
           throw err;
         }
@@ -69,8 +69,52 @@ describe('AUTH', () => {
     });
   });
   /*
-    GET /auth/get-user
-    ACCESS: public
+  GET /auth/admin-exists
+  ACCESS: PUBLIC
+  */
+  describe('GET /auth/admin-exists', () => {
+    it('should send back adminExists: false if no admin user exists in the database', done => {
+      chai.request(server)
+        .get('/auth/admin-exists')
+        .end((err, res) => {
+            expect(res.body.adminExists).to.be.false;
+          done();
+        });
+    });
+    it('should send back adminExists: true if an admin user exists in the database', done => {    
+      const admin1 = {
+        username: 'mradmin',
+        password: 'mr-admin2021',
+        role: 'admin',
+        privileges: {
+          "create": "yes",
+          "read own": "yes",
+          "read any": "yes",
+          "update own": "yes",
+          "update any": "yes",
+          "delete own": "yes",
+          "delete any": "yes"
+        }
+      };
+      const admin1Hash = bcrypt.hashSync(admin1.password, saltRounds);
+
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [admin1.username, admin1Hash, admin1.role, JSON.stringify(admin1.privileges)], (err, results) => {
+        if(err) {
+          throw err;
+        }
+
+        chai.request(server)
+          .get('/auth/admin-exists')
+          .end((err, res) => {
+              expect(res.body.adminExists).to.be.true;
+            done();
+          });
+      });
+    });
+  });
+  /*
+  GET /auth/get-user
+  ACCESS: public
   */
   describe('GET /auth/get-user', () => {
     it('should send back a message and the logged in user if a user is logged in', (done) => {

@@ -9,15 +9,17 @@ module.exports = {
       return `${field.name} ${field.type.toUpperCase()} ${required}, `;
     }).join('');
 
-    return `CREATE TABLE IF NOT EXISTS ${contentType.name}s (id INT NOT NULL AUTO_INCREMENT, ${columns}PRIMARY KEY (id))`;
+    return `CREATE TABLE IF NOT EXISTS ${contentType.name}s (id INT NOT NULL AUTO_INCREMENT, ${columns}owner_id INT NOT NULL, PRIMARY KEY (id), FOREIGN KEY (owner_id) REFERENCES users(id))`;
   },
 
   dropTable(contentTypeName) {
     if(typeof contentTypeName !== 'string') {
       const tables = contentTypeName.map(name => {
         if(contentTypeName.indexOf(name) === contentTypeName.length - 1) {
-          return name + 's';
+          // no comma if its the last table in sql statement
+          return `${name}s`;
         } else {
+          // comma if its not the last
           return `${name}s,`;
         }
       });

@@ -11,6 +11,10 @@ const access = require('../../access_control/accessControl');
 const authRouter = express.Router();
 
 
+// GET /auth/admin-exists
+// ACCESS: PUBLIC
+authRouter.get('/admin-exists', authController.adminExists);
+
 // GET /auth/get-user
 // ACCESS: PUBLIC
 authRouter.get('/get-user', authController.getUser);

@@ -8,6 +8,22 @@ const db = require('../../config/db/db');
 const AuthRes = require('../../utils/helpers/authJsonRes');
 
 module.exports = {
+  adminExists(req, res, next) {
+    db.query('SELECT username FROM users WHERE role = "admin"', (err, results) => {
+      if(err) {
+        return next(err);
+      }
+      
+      if(results.length === 0) {
+        res.json({ adminExists: false });
+      } else if(results.length > 1) {
+        next('More than 1 admin exists in the database!');
+      } else {
+        res.json({ adminExists: true });
+      }
+    });
+  },
+
   getUser(req, res, next) {
     
     if(req.user) {
