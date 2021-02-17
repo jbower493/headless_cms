@@ -42,6 +42,22 @@ describe('API/CONTENT-TYPES', () => {
   };
   const admin1Hash = bcrypt.hashSync(admin1.password, saltRounds);
 
+  const user1 = {
+    username: 'John',
+    password: 'johndoe',
+    role: 'user'
+  };
+  const user1Privileges = {
+    "create": true,
+    "read own": true,
+    "read any": true,
+    "update own": true,
+    "update any": false,
+    "delete own": true,
+    "delete any": false
+  };
+  const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
+
   const contentType1 = {
     name: 'post',
     fields: [
@@ -90,7 +106,7 @@ describe('API/CONTENT-TYPES', () => {
       if(err) {
         throw err;
       }
-      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [admin1.username, admin1Hash, admin1.role, JSON.stringify(adminPrivileges)], (err, results) => {
+      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?), (?, ?, ?, ?)', [admin1.username, admin1Hash, admin1.role, JSON.stringify(adminPrivileges), user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results) => {
         if(err) {
           throw err;
         }
@@ -308,7 +324,7 @@ describe('API/CONTENT-TYPES', () => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
-        .send(admin1)
+        .send(user1)
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
 
@@ -328,7 +344,7 @@ describe('API/CONTENT-TYPES', () => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
-        .send(admin1)
+        .send(user1)
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
 
@@ -348,7 +364,7 @@ describe('API/CONTENT-TYPES', () => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
-        .send(admin1)
+        .send(user1)
         .end((err, res) => {
           expect(res).to.have.cookie('session_id');
 
@@ -365,6 +381,306 @@ describe('API/CONTENT-TYPES', () => {
               })
             })
         })
+    });
+  });
+  // /*
+  // PUT /api/content-type/:name
+  // ACCESS: logged in ADMIN
+  // */
+  // describe('PUT /api/content-type/:name', () => {
+  //   const updatedContentType = {
+  //     name: 'post',
+  //     fields: [
+  //       {
+  //         name: 'heading',
+  //         type: 'text',
+  //         required: true
+  //       },
+  //       {
+  //         name: 'paragraph_one',
+  //         type: 'text',
+  //         required: true
+  //       },
+  //       {
+  //         name: 'paragraph_two',
+  //         type: 'text',
+  //         required: false
+  //       },
+  //       {
+  //         name: 'no_of_comments',
+  //         type: 'int',
+  //         required: true
+  //       }
+  //     ]
+  //   };
+
+  //   it('should return 403 and an error if not logged in as a user before trying to update a content type', done => {
+  //     chai.request(server)
+  //       .put(`/api/content-type/${contentType1.name}`)
+  //       .send(updatedContentType)
+  //       .end((err, res) => {
+  //         expect(res).to.have.status(403);
+  //         expect(res.body.error).to.equal('Access denied');
+  //         expect(res.body.success).to.be.false;
+  //         done();
+  //       })
+  //   });
+  //   it('should return an error if no content type with the provided name exists', done => {
+  //     const agent = chai.request.agent(server);
+  //     agent
+  //       .post('/auth/login')
+  //       .send(admin1)
+  //       .end((err, res) => {
+  //         expect(res).to.have.cookie('session_id');
+
+  //         agent
+  //           .put('/api/content-type/flamingo')
+  //           .send(updatedContentType)
+  //           .end((err, res) => {
+  //             expect(res.body.success).to.be.false;
+  //             expect(res.body.error).to.equal('No content type with that name exists');
+  //             agent.close(err => {
+  //               done();
+  //             })
+  //           })
+  //       })
+  //   });
+  //   it('should return an error and success: false if the altered content type object does not pass validation', done => {
+  //     const invalidContentType = {
+  //       name: 'post',
+  //       fields: [
+  //         {
+  //           name: 'heading-1',
+  //           type: 'text',
+  //           required: true
+  //         },
+  //         {
+  //           name: 'paragraph_one',
+  //           type: 'paragraph',
+  //           required: true
+  //         },
+  //         {
+  //           name: 'no_of_comments',
+  //           type: 'int',
+  //           required: 'yes'
+  //         }
+  //       ]
+  //     };
+
+  //     const agent = chai.request.agent(server)
+  //     agent
+  //       .post('/auth/login')
+  //       .send(admin1)
+  //       .end((err, res) => {
+  //         expect(res).to.have.cookie('session_id');
+
+  //         agent
+  //           .put(`/api/content-type/${contentType1.name}`)
+  //           .send(invalidContentType)
+  //           .end((err, res) => {
+  //             expect(res).to.have.status(400);
+  //             expect(res.body.error).to.be.a('string');
+  //             expect(res.body.success).to.be.false;
+  //             agent.close(err => {
+  //               done();
+  //             })
+  //           })
+  //       })
+  //   });
+  //   it('should return success: true and message: Content type successfully updated if successful', done => {
+  //     const agent = chai.request.agent(server)
+  //     agent
+  //       .post('/auth/login')
+  //       .send(admin1)
+  //       .end((err, res) => {
+  //         expect(res).to.have.cookie('session_id');
+
+  //         agent
+  //           .put(`/api/content-type/${contentType1.name}`)
+  //           .send(updatedContentType)
+  //           .end((err, res) => {
+  //             expect(res.body.message).to.equal('Content type successfully updated');
+  //             expect(res.body.success).to.be.true;
+  //             agent.close(err => {
+  //               done();
+  //             })
+  //           })
+  //       })
+  //   });
+  //   it('content type with updated name in the DB should have fields matching the altered content type if successful', done => {
+  //     const agent = chai.request.agent(server)
+  //     agent
+  //       .post('/auth/login')
+  //       .send(admin1)
+  //       .end((err, res) => {
+  //         expect(res).to.have.cookie('session_id');
+
+  //         agent
+  //           .put(`/api/content-type/${contentType1.name}`)
+  //           .send(updatedContentType)
+  //           .end((err, res) => {
+  //             db.query(`SHOW COLUMNS FROM headless_cms_test.${contentType1.name}s`, (err, results) => {
+  //               expect(err).to.be.null;
+
+  //               // map results to a valid content type object
+  //               const responseFields = results.map(field => {
+  //                 const name = field.Field;
+  //                 let type;
+  //                 let required = false;
+
+  //                 if(field.Type.includes('int')) {
+  //                   type = 'int';
+  //                 } else {
+  //                   type = field.Type;
+  //                 }
+  //                 if(field.Null === 'NO') {
+  //                   required = true;
+  //                 }
+
+  //                 return {
+  //                   name,
+  //                   type,
+  //                   required
+  //                 };
+  //               });
+  //               expect(responseFields[0].name).to.equal(updatedContentType.fields[0].name);
+  //               expect(responseFields[0].type).to.equal(updatedContentType.fields[0].type);
+  //               expect(responseFields[0].required).to.equal(updatedContentType.fields[0].required);
+  //               expect(responseFields[1].name).to.equal(updatedContentType.fields[1].name);
+  //               expect(responseFields[1].type).to.equal(updatedContentType.fields[1].type);
+  //               expect(responseFields[1].required).to.equal(updatedContentType.fields[1].required);
+  //               expect(responseFields[2].name).to.equal(updatedContentType.fields[2].name);
+  //               expect(responseFields[2].type).to.equal(updatedContentType.fields[2].type);
+  //               expect(responseFields[2].required).to.equal(updatedContentType.fields[2].required);
+  //               agent.close(err => {
+  //                 done();
+  //               })
+  //             });
+  //           })
+  //       })
+  //   });
+  // });
+  /*
+  DELETE /api/content-type/:name
+  ACCESS: logged in ADMIN
+  */
+  describe('DELETE /api/content-type/:name', () => {
+    it('should return 403 and an error if not logged in as admin before trying to delete a content type', done => {
+      chai.request(server)
+        .delete(`/api/content-type/${contentType1.name}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return an error if no content type with the provided name exists', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content-type/flamingo`)
+            .end((err, res) => {
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content type with that name exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: Content type successfully deleted if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content-type/${contentType1.name}`)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('Content type successfully deleted');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('content type with deleted name should no longer be present in the DB if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(admin1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content-type/${contentType1.name}`)
+            .end((err, res) => {
+              db.query(`SELECT * FROM ${contentType1.name}s`, (err, results) => {
+                expect(err.code).to.equal('ER_NO_SUCH_TABLE');
+                agent.close(err => {
+                  done();
+                })
+              })
+            })
+        })
+    });
+  });
+  /*
+  GET /api/content-types
+  ACCESS: logged in USER
+  */
+  describe('GET /api/content-types', () => {
+    // runs before each it block in THIS describe block only, don't need to do an after each beacuse this content type gets removed if exists in the first after each block at the top of the test script
+    beforeEach(done => {
+      db.query(contentTypeQuery.createTable(newContentType), (err, results) => {
+        if(err) {
+          throw err;
+        }
+        done();
+      });
+    });
+
+    it('should return 403 and an error if not logged in as a user before trying to get all content types', done => {
+      chai.request(server)
+        .get('/api/content-types')
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return an array of all content types if successful', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get('/api/content-types')
+            .end((err, res) => {
+              expect(res.body.success).to.be.true;
+              expect(res.body.contentTypes).to.be.an('array');
+              expect(res.body.contentTypes.length).to.equal(2);
+              // the order of these is reversed because parks comes before posts alphabetically, so is shown first in the results, even though parks was created 2nd
+              expect(res.body.contentTypes[0].name).to.equal(newContentType.name);
+              expect(res.body.contentTypes[1].name).to.equal(contentType1.name);
+              agent.close(err => {
+                done();
+              })
+            })
+        });
     });
   });
 

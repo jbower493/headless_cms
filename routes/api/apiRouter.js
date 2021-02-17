@@ -47,7 +47,20 @@ apiRouter.post('/content-type', access.loggedInAdmin, contentTypesController.cre
 
 // GET /api/content-type/:name
 // ACCESS: logged in USER
-apiRouter.get('/content-type/:name', access.loggedInUser, contentTypesController.getUser);
+apiRouter.get('/content-type/:name', access.loggedInUser, contentTypesController.getContentType);
+
+// This is commented out until i figure out how to dynamically change a table
+// // PUT /api/content-type/:name
+// // ACCESS: logged in ADMIN
+// apiRouter.put('/content-type/:name', access.loggedInAdmin, contentTypesController.updateContentType);
+
+// DELETE /api/content-type/:name
+// ACCESS: logged in ADMIN
+apiRouter.delete('/content-type/:name', access.loggedInAdmin, contentTypesController.deleteContentType);
+
+// GET /api/content-types
+// ACCESS: logged in USER
+apiRouter.get('/content-types', access.loggedInUser, contentTypesController.getAllContentTypes);
 
 
 module.exports = apiRouter;
