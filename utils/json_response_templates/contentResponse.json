@@ -1,0 +1,12 @@
+{
+  "error": null,
+  "message": "something",
+  "success": true,
+  "data": {
+    "post": {
+      "title": "Something",
+      "body": "Some body",
+      "image_ref": "some_image.jpg"
+    }
+  }
+}

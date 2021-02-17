@@ -132,14 +132,116 @@ describe('API/CONTENT', () => {
       done();
     });
   });
-  // /*
-  // POST /api/content/:name
-  // */
-  // describe('POST /api/content/:name', () => {
-  //   it('', done => {
+  /*
+  POST /api/content/:name
+  */
+  describe('POST /api/content/:name', () => {
+    it('should return 403 and an error if not logged in as at least a regular user before trying to create a new content type', done => {
+      chai.request(server)
+        .post(`/api/content/${contentType1.name}`)
+        .send(newPost)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .post('/api/content/no%special#chars0Rnumb3rs')
+            .send(post1)
+            .end((err, res) => {
+              expect(res.body.error).to.equal('Name param must be a valid content type name');
+              expect(res.body.success).to.be.false;
+            })
+        })
+    });
+    it('should return an error and success: false if the new content object does not pass validation', done => {
+      const invalidPost = {
+        title: ['N', 'O', 'T', 'T', 'E', 'X', 'T'],
+        body: 12345,
+        image_ref: 'dont_blame_me.jpg'
+      };
+
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post(`/api/content/${contentType1.name}`)
+            .send(invalidPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.be.a('string');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: Content successfully created if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post(`/api/content/${contentType1.name}`)
+            .send(newPost)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('Content successfully created');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('new content should be present in the DB if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post(`/api/content/${contentType1.name}`)
+            .send(newPost)
+            .end((err, res) => {
+              
+              // query not fully dynamic so make sure to change it if content type in test is no longer post
+              db.query(`SELECT * FROM posts WHERE title = ?`, [post1.title], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results.length).to.equal(1);
+                expect(results[0].title).to.equal(post1.title);
+                expect(results[0].body).to.equal(post1.body);
+                expect(results[0].image_ref).to.equal(post1.image_ref);
+                agent.close(err => {
+                  done();
+                })
+              });
+            })
+        })
+    });
+  });
+  
   // /*
   // GET /api/content/:name/:id
   // */
