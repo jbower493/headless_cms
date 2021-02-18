@@ -319,10 +319,43 @@ describe('VALIDATORS', () => {
       expect(validateContent(post1, postContentType)).to.be.true;
       expect(validateContent(girafe1, girafeContentType)).to.be.true;
     });
-    it('should still return true if a non required field is null and every other field is fine');
-    it('should return an error if the number of properties on content object doesnt match the content type');
-    it('should return an error if any field names from the content object do not exists on the content type');
-    it('should return an error if any content field values do not conform to their constraints');
+    it('should still return true if a non required field is null and every other field is fine', () => {
+      const girafeFamilyNull = {
+        first_name: 'Kenny',
+        neck_height: 277,
+        family: null,
+        weight: 211
+      };
+      expect(validateContent(girafeFamilyNull, girafeContentType)).to.be.true;
+    });
+    it('should return an error if the number of properties on content object doesnt match the content type', () => {
+      const invalidGirafe = {
+        first_name: 'Kenny',
+        neck_height: 277,
+        family: '{"name": "Gary", "relationship": "brother"}',
+        weight: 211,
+        squad: 'squaded up'
+      };
+      expect(validateContent(invalidGirafe, girafeContentType)).to.equal('Wrong number of properties on content object');
+    });
+    it('should return an error if any field names from the content object do not exists on the content type', () => {
+      const invalidGirafe = {
+        first_name: 'Kenny',
+        neck_height: 277,
+        family: '{"name": "Gary", "relationship": "brother"}',
+        leaves_per_day: 211
+      };
+      expect(validateContent(invalidGirafe, girafeContentType)).to.equal('Content fields do not match content type fields');
+    });
+    it('should return an error if any content field values do not conform to their constraints', () => {
+      const invalidGirafe = {
+        first_name: 'Kenny',
+        neck_height: 277,
+        family: {"name": "Gary", "relationship": "brother"},
+        weight: 211
+      };
+      expect(validateContent(invalidGirafe, girafeContentType)).to.equal('One or more content fields does not fit the constraints of its field type');
+    });
   });
 
 });

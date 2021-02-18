@@ -24,23 +24,27 @@ module.exports = (content, contentType) => {
   let nonConformingFieldValue = false;
 
   contentType.fields.forEach(field => {
-    if(!content[field.name]) {
-      badFieldName = true;
-    }
-
     if(field.required === false && content[field.name] === null) {
       // do nothing and let it pass through the validation
-    } else if(field.type === 'text') {
-      if(typeof content[field.name] !== 'string' || content[field.name].length > 30000) {
-        nonConformingFieldValue = true;
+    } else {
+      if(!content[field.name]) {
+        badFieldName = true;
       }
-    } else if(field.type === 'int') {
-      if(typeof content[field.name] !== 'number') {
-        nonConformingFieldValue = true;
-      }
-    } else if(field.type === 'json') {
-      if(typeof JSON.parse(content[field.name]) !== 'object') {
-        nonConformingFieldValue = true;
+  
+      if(field.type === 'text') {
+        if(typeof content[field.name] !== 'string' || content[field.name].length > 30000) {
+          nonConformingFieldValue = true;
+        }
+      } else if(field.type === 'int') {
+        if(typeof content[field.name] !== 'number') {
+          nonConformingFieldValue = true;
+        }
+      } else if(field.type === 'json') {
+        try {
+          const validJson = JSON.parse(content[field.name]);
+        } catch(err) {
+          nonConformingFieldValue = true;
+        }
       }
     }
   });
