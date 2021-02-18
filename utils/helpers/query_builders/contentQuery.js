@@ -1,6 +1,7 @@
 module.exports = {
   insertContent(content, contentTypeName) {
-    const fields = Object.keys(content).join(', ');
+    const fields = Object.keys(content);
+    const fieldsString = fields.join(', ');
     const questionMarks = [];
     for(let i = 0; i < fields.length; i++) {
       questionMarks.push('?, ');
@@ -8,6 +9,6 @@ module.exports = {
     const questionMarksString = questionMarks.join('');
 
 
-    return `INSERT INTO ${contentTypeName}s (${fields}, owner_id) VALUES (${questionMarksString}?)`;
+    return `INSERT INTO ${contentTypeName}s (${fieldsString}, owner_id) VALUES (${questionMarksString}?)`;
   }
 };

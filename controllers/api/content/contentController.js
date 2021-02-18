@@ -47,11 +47,11 @@ module.exports = {
         return res.status(400).json(new ContentRes(validated, '', false));
       }
 
+      // content is valid, everything else is fine, insert the content and send success response
+      
       const queryParams = Object.keys(newContent).map(field => newContent[field]);
       queryParams.push(req.user.id);
-      // content is valid, everything else is fine, insert the content and send success response
-      console.log(contentQuery.insertContent(newContent, contentTypeName))
-      console.log(queryParams)
+      
       db.query(contentQuery.insertContent(newContent, contentTypeName), queryParams, (err, results) => {
         if(err) {
           return next(err);
