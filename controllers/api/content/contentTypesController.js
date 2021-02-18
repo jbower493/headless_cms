@@ -11,8 +11,9 @@ const ContentTypeRes = require('../../../utils/helpers/contentTypeJsonRes');
 // import models
 const ContentType = require('../../../models/ContentType');
 
-// import SQL query builder helper
+// import helpers
 const contentTypeQuery = require('../../../utils/helpers/query_builders/contentTypeQuery');
+const dbResultsToContentType = require('../../../utils/helpers/content_type_helpers/resultsToContentType');
 
 
 module.exports = {
@@ -54,39 +55,41 @@ module.exports = {
         }
       }
 
-      // remove id field from response
-      results.forEach(field => {
-        if(field.Field === 'id') {
-          results.splice(results.indexOf(field), 1);
-        }
-      });
+      // // remove id field from response
+      // results.forEach(field => {
+      //   if(field.Field === 'id') {
+      //     results.splice(results.indexOf(field), 1);
+      //   }
+      // });
 
-      // map results to a valid content type object
-      const responseFields = results.map(field => {
-        const name = field.Field;
-        let type;
-        let required = false;
+      // // map results to a valid content type object
+      // const responseFields = results.map(field => {
+      //   const name = field.Field;
+      //   let type;
+      //   let required = false;
 
-        if(field.Type.includes('int')) {
-          type = 'int';
-        } else {
-          type = field.Type;
-        }
-        if(field.Null === 'NO') {
-          required = true;
-        }
+      //   if(field.Type.includes('int')) {
+      //     type = 'int';
+      //   } else {
+      //     type = field.Type;
+      //   }
+      //   if(field.Null === 'NO') {
+      //     required = true;
+      //   }
 
-        return {
-          name,
-          type,
-          required
-        };
-      });
+      //   return {
+      //     name,
+      //     type,
+      //     required
+      //   };
+      // });
 
-      const responseContentType = {
-        name,
-        fields: responseFields
-      };
+      // const responseContentType = {
+      //   name,
+      //   fields: responseFields
+      // };
+
+      const responseContentType = dbResultsToContentType(results, name);
 
       res.json(new ContentTypeRes(null, 'Content Type successfully fetched', true, responseContentType));
     })

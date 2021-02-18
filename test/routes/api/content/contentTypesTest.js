@@ -96,6 +96,11 @@ describe('API/CONTENT-TYPES', () => {
         name: 'no_of_barbeques',
         type: 'int',
         required: true
+      },
+      {
+        name: 'skate_parks',
+        type: 'json',
+        required: false
       }
     ]
   };

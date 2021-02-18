@@ -156,11 +156,36 @@ describe('API/CONTENT', () => {
           expect(res).to.have.cookie('session_id');
 
           agent
-            .post('/api/content/no%special#chars0Rnumb3rs')
+            .post('/api/content/no-specialcharsORnumb3rs')
             .send(post1)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.error).to.equal('Name param must be a valid content type name');
               expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error: Content type does not exist if the provided name is not a content type', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post('/api/content/elephant')
+            .send(post1)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Content type does not exist');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
             })
         })
     });
@@ -225,14 +250,14 @@ describe('API/CONTENT', () => {
             .end((err, res) => {
               
               // query not fully dynamic so make sure to change it if content type in test is no longer post
-              db.query(`SELECT * FROM posts WHERE title = ?`, [post1.title], (err, results) => {
+              db.query(`SELECT * FROM posts WHERE title = ?`, [newPost.title], (err, results) => {
                 if(err) {
                   throw err;
                 }
                 expect(results.length).to.equal(1);
-                expect(results[0].title).to.equal(post1.title);
-                expect(results[0].body).to.equal(post1.body);
-                expect(results[0].image_ref).to.equal(post1.image_ref);
+                expect(results[0].title).to.equal(newPost.title);
+                expect(results[0].body).to.equal(newPost.body);
+                expect(results[0].image_ref).to.equal(newPost.image_ref);
                 agent.close(err => {
                   done();
                 })

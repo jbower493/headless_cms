@@ -4,6 +4,7 @@ const expect = require('chai').expect;
 // import validators
 const validateUser = require('../../validators/validateUser');
 const validateContentType = require('../../validators/validateContentType');
+const validateContent = require('../../validators/validateContent');
 
 describe('VALIDATORS', () => {
   /*
@@ -275,6 +276,53 @@ describe('VALIDATORS', () => {
       };
       expect(validateContentType(invalidContentType)).to.equal('Required is not a boolean');
     });
+  });
+  /*
+  Validate Content
+  */
+  describe('validate content', () => {
+    const postContentType = {
+      name: 'post',
+      fields: [
+        { name: 'title', type: 'text', required: true },
+        { name: 'body', type: 'text', required: true },
+        { name: 'image_ref', type: 'text', required: false },
+        { name: 'owner_id', type: 'int', required: true }
+      ]
+    };
+  
+    const post1 = {
+      title: 'A New Start',
+      body: 'Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.',
+      image_ref: '/images/a-new-start.jpg'
+    };
+
+    const girafeContentType = {
+      name: 'girafe',
+      fields: [
+        { name: 'first_name', type: 'text', required: true },
+        { name: 'neck_height', type: 'int', required: true },
+        { name: 'family', type: 'json', required: false },
+        { name: 'weight', type: 'int', required: true },
+        { name: 'owner_id', type: 'int', required: true }
+      ]
+    };
+
+    const girafe1 = {
+      first_name: 'Kenny',
+      neck_height: 277,
+      family: '{"name": "Gary", "relationship": "brother"}',
+      weight: 211
+    };
+
+    it('should return true if content passes validation', () => {
+      expect(validateContent(post1, postContentType)).to.be.true;
+      expect(validateContent(girafe1, girafeContentType)).to.be.true;
+    });
+    it('should still return true if a non required field is null and every other field is fine');
+    it('should return an error if the number of properties on content object doesnt match the content type');
+    it('should return an error if any field names from the content object do not exists on the content type');
+    it('should return an error if any content field values do not conform to their constraints');
   });
 
 });
