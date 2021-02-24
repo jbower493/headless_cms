@@ -346,7 +346,7 @@ describe('API/CONTENT-TYPES', () => {
           done();
         })
     });
-    it('should return error if provided content type name in not valid', done => {
+    it('should return error if provided content type name is not valid', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')

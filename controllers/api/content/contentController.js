@@ -7,6 +7,7 @@ const allLettersOrUnderscore = require('../../../validators/allLettersOrUndersco
 
 // import JSON response helper
 const ContentRes = require('../../../utils/helpers/contentJsonRes');
+const GetContentRes = require('../../../utils/helpers/getContentJsonRes');
 
 // import helpers
 const contentQuery = require('../../../utils/helpers/query_builders/contentQuery');
@@ -58,6 +59,36 @@ module.exports = {
         }
         res.json(new ContentRes(null, 'Content successfully created', true));
       });
+    });
+  },
+
+  getContent(req, res, next) {
+    const { name, id } = req.params;
+
+    // return error if name param contains bad chars
+    if(!allLettersOrUnderscore(name)) {
+      return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
+    }
+
+    db.query(`SELECT * FROM ${name}s WHERE id = ?`, [id], (err, results) => {
+      if(err) {
+        if(err.code === 'ER_NO_SUCH_TABLE') {
+          return res.status(400).json(new GetContentRes('No content type with that name exists', '', false, name, null));
+        } else {
+          return next(err);
+        }
+      }
+      // if no error, continue
+
+      if(results.length === 0) {
+        return res.status(400).json(new GetContentRes('No content with that id exists', '', false, name, null));
+      }
+
+      // remove id from content object
+      delete results[0].id;
+      delete results[0].owner_id;
+
+      res.json(new GetContentRes(null, 'Content successfully fetched', true, name, results[0]))
     });
   }
 };

@@ -83,6 +83,10 @@ describe('API/CONTENT', () => {
     image_ref: '/images/a-new-start.jpg'
   };
 
+  // reset post 1 and 2 id variables in the before each hook fo use in later tests
+  let post1Id;
+  let post2Id;
+
   before(done => {
     // insert regular user into db before all tests
     db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ? ,?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results, fields) => {
@@ -123,7 +127,16 @@ describe('API/CONTENT', () => {
       if(err) {
         throw err;
       }
-      done();
+
+      db.query('SELECT id FROM posts WHERE title = ? OR title = ?', [post1.title, post2.title], (err, results) => {
+        if(err) {
+          throw err;
+        }
+
+        post1Id = results[0].id;
+        post2Id = results[1].id;
+        done();
+      });
     });
   });
   afterEach(done => {
@@ -134,6 +147,7 @@ describe('API/CONTENT', () => {
   });
   /*
   POST /api/content/:name
+  ACCESS: logged in USER
   */
   describe('POST /api/content/:name', () => {
     it('should return 403 and an error if not logged in as at least a regular user before trying to create a new content type', done => {
@@ -267,14 +281,109 @@ describe('API/CONTENT', () => {
     });
   });
   
-  // /*
-  // GET /api/content/:name/:id
-  // */
-  // describe('GET /api/content/:name/:id', () => {
-  //   it('', done => {
+  /*
+  GET /api/content/:name/:id
+  ACCESS: logged in USER
+  */
+  describe('GET /api/content/:name/:id', () => {
+    it('should return 403 and an error if not logged in as at least a regular user before trying to fetch a content item', done => {
+      chai.request(server)
+        .get(`/api/content/${contentType1.name}/${post1.id}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return error if provided content type name is not valid', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .get(`/api/content/Hello1066!/1`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.data).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('Name param must be a valid content type name');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content type exists with the name provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/flamingo/1`)
+            .end((err, res) => {
+              expect(res.body.data).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content type with that name exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/${contentType1.name}/0`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.data).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content with that id exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return the correct content object if one exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/${contentType1.name}/${post1Id}`)
+            .end((err, res) => {
+              console.log(res.body)
+              expect(res.body.data).to.be.an('object');
+              expect(res.body.data).to.have.property('post');
+              expect(res.body.data.post.title).to.equal(post1.title);
+              expect(res.body.data.post.body).to.equal(post1.body);
+              expect(res.body.data.post.image_ref).to.equal(post1.image_ref);
+              expect(res.body.success).to.be.true;
+              expect(res.body.message).to.equal('Content successfully fetched');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+  });
   // /*
   // PUT /api/content/:name/:id
   // */

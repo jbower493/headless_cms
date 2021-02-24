@@ -60,16 +60,21 @@ module.exports = {
       }
 
       if(results.length === 0) {
-        res.json(new AuthRes('Incorrect credentials', '', false, null));
+        return res.json(new AuthRes('Incorrect credentials', '', false, null));
       }
 
-      const matches = await bcrypt.compare(password, results[0].password);
-      if(matches) {
-        req.session.auth = { userId: results[0].id };
-        res.json(new AuthRes(null, 'Log in successful', true, { username: results[0].username }));
-      } else {
-        res.json(new AuthRes('Incorrect credentials', '', false, null));
+      try {
+        const matches = await bcrypt.compare(password, results[0].password);
+        if(matches) {
+          req.session.auth = { userId: results[0].id };
+          res.json(new AuthRes(null, 'Log in successful', true, { username: results[0].username }));
+        } else {
+          res.json(new AuthRes('Incorrect credentials', '', false, null));
+        }
+      } catch(err) {
+        next(err);
       }
+      
     });
   },
 

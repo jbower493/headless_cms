@@ -72,5 +72,9 @@ Content routes
 // ACCESS: logged in USER
 apiRouter.post('/content/:name', access.loggedInUser, contentController.createContent);
 
+// GET /api/content/:name/:id
+// ACCESS: logged in USER
+apiRouter.get('/content/:name/:id', access.loggedInUser, contentController.getContent);
+
 
 module.exports = apiRouter;

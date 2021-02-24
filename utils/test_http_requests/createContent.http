@@ -1,0 +1,8 @@
+POST http://localhost:8080/api/content/post HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "A New Start",
+  "body": "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor sit amet.",
+  "image_ref": "/images/a-new-start.jpg"
+}
