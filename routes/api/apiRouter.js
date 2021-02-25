@@ -76,5 +76,9 @@ apiRouter.post('/content/:name', access.loggedInUser, contentController.createCo
 // ACCESS: logged in USER
 apiRouter.get('/content/:name/:id', access.loggedInUser, contentController.getContent);
 
+// PUT /api/content/:name/:id
+// ACCESS: logged in USER
+apiRouter.put('/content/:name/:id', access.loggedInUser, contentController.updateContent);
+
 
 module.exports = apiRouter;

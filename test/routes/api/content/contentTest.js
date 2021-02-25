@@ -369,7 +369,6 @@ describe('API/CONTENT', () => {
           agent
             .get(`/api/content/${contentType1.name}/${post1Id}`)
             .end((err, res) => {
-              console.log(res.body)
               expect(res.body.data).to.be.an('object');
               expect(res.body.data).to.have.property('post');
               expect(res.body.data.post.title).to.equal(post1.title);
@@ -384,14 +383,168 @@ describe('API/CONTENT', () => {
         })
     });
   });
-  // /*
-  // PUT /api/content/:name/:id
-  // */
-  // describe('PUT /api/content/:name/:id', () => {
-  //   it('', done => {
+  /*
+  PUT /api/content/:name/:id
+  ACCESS: logged in USER
+  */
+  describe('PUT /api/content/:name/:id', () => {
+    const updatedPost = {
+      title: 'Post One Heading',
+      body: 'Something that is different from lorem ipsum',
+      image_ref: '/images/an_image_ref.jpg'
+    };
+    it('should return 403 and an error if not logged in as at least a regular user before trying to edit a content type', done => {
+      chai.request(server)
+        .put(`/api/content/${contentType1.name}/${post1Id}`)
+        .send(updatedPost)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .put(`/api/content/no-specialcharsORnumb3rs/${post1Id}`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Name param must be a valid content type name');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error: Content type does not exist if the provided name is not a content type', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/elephant/${post1Id}`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Content type does not exist');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/0`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.data).to.be.null;
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content with that id exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return an error and success: false if the updated content object does not pass validation', done => {
+      const invalidPost = {
+        title: ['N', 'O', 'T', 'T', 'E', 'X', 'T'],
+        body: 12345,
+        image_ref: 'dont_blame_me.jpg'
+      };
+
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .send(invalidPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.be.a('string');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: Content successfully updated if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('Content successfully updated');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('updated content should have the new field values in the DB if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .send(updatedPost)
+            .end((err, res) => {
+              
+              // query not fully dynamic so make sure to change it if content type in test is no longer post
+              db.query(`SELECT * FROM posts WHERE id = ?`, [post1Id], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results.length).to.equal(1);
+                expect(results[0].title).to.equal(updatedPost.title);
+                expect(results[0].body).to.equal(updatedPost.body);
+                expect(results[0].image_ref).to.equal(updatedPost.image_ref);
+                agent.close(err => {
+                  done();
+                })
+              });
+            })
+        })
+    });
+  });
   // /*
   // DELETE /api/content/:name/:id
   // */

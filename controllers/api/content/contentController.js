@@ -90,5 +90,19 @@ module.exports = {
 
       res.json(new GetContentRes(null, 'Content successfully fetched', true, name, results[0]))
     });
+  },
+
+  updateContent(req, res, next) {
+    const { name, id } = req.params;
+
+    // return error if name param contains bad chars
+    if(!allLettersOrUnderscore(name)) {
+      return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
+    }
+
+
+
+
+    res.send('Hi')
   }
 };
