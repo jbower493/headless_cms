@@ -94,15 +94,53 @@ module.exports = {
 
   updateContent(req, res, next) {
     const { name, id } = req.params;
+    const updatedContent = req.body;
 
     // return error if name param contains bad chars
     if(!allLettersOrUnderscore(name)) {
       return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
     }
 
+    // fetch content type object from db
+    const plural = `${name}s`;
+    const databaseName = db.config.database;
 
+    db.query(`SHOW COLUMNS FROM ${databaseName}.${plural}`, (err, results) => {
+      if(err) {
+        if(err.code === 'ER_NO_SUCH_TABLE') {
+          return res.status(400).json(new ContentRes('Content type does not exist', '', false));
+        } else {
+          return next(err);
+        }
+      } 
+      // if no error in db call, continue with validation
 
+      // map db results to a content type object
+      const contentType = dbResultsToContentType(results, name);
+      
+      // validate new content object against its content type object
+      const validated = validateContent(updatedContent, contentType);
+      
+      if(validated !== true) {
+        return res.status(400).json(new ContentRes(validated, '', false));
+      }
 
-    res.send('Hi')
+      // content is valid, everything else is fine, insert the content and send success response
+
+      const queryParams = Object.keys(updatedContent).map(field => updatedContent[field]);
+      queryParams.push(id);
+      
+      db.query(contentQuery.updateContent(updatedContent, name), queryParams, (err, results) => {
+        if(err) {
+          return next(err);
+        }
+        
+        if(results.affectedRows === 0) {
+          return res.status(400).json(new ContentRes('No content with that id exists', '', false));
+        }
+
+        res.json(new ContentRes(null, 'Content successfully updated', true));
+      });
+    });
   }
 };

@@ -446,28 +446,6 @@ describe('API/CONTENT', () => {
             })
         })
     });
-    it('should return error if no content exists with the id provided', done => {
-      const agent = chai.request.agent(server);
-      agent
-        .post('/auth/login')
-        .send(user1)
-        .end((err, res) => {
-          expect(res).to.have.cookie('session_id');
-
-          agent
-            .put(`/api/content/${contentType1.name}/0`)
-            .send(updatedPost)
-            .end((err, res) => {
-              expect(res).to.have.status(400);
-              expect(res.body.data).to.be.null;
-              expect(res.body.success).to.be.false;
-              expect(res.body.error).to.equal('No content with that id exists');
-              agent.close(err => {
-                done();
-              })
-            })
-        })
-    });
     it('should return an error and success: false if the updated content object does not pass validation', done => {
       const invalidPost = {
         title: ['N', 'O', 'T', 'T', 'E', 'X', 'T'],
@@ -489,6 +467,27 @@ describe('API/CONTENT', () => {
               expect(res).to.have.status(400);
               expect(res.body.error).to.be.a('string');
               expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/0`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content with that id exists');
               agent.close(err => {
                 done();
               })

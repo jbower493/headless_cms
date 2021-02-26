@@ -10,5 +10,12 @@ module.exports = {
 
 
     return `INSERT INTO ${contentTypeName}s (${fieldsString}, owner_id) VALUES (${questionMarksString}?)`;
+  },
+
+  updateContent(content, contentTypeName) {
+    const fields = Object.keys(content);
+    const insert = fields.map(field => `${field} = ?`).join(', ');
+
+    return `UPDATE ${contentTypeName}s SET ${insert} WHERE id = ?`;
   }
 };
