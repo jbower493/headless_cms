@@ -393,7 +393,7 @@ describe('API/CONTENT', () => {
       body: 'Something that is different from lorem ipsum',
       image_ref: '/images/an_image_ref.jpg'
     };
-    it('should return 403 and an error if not logged in as at least a regular user before trying to edit a content type', done => {
+    it('should return 403 and an error if not logged in as at least a regular user before trying to edit content', done => {
       chai.request(server)
         .put(`/api/content/${contentType1.name}/${post1Id}`)
         .send(updatedPost)
@@ -544,15 +544,126 @@ describe('API/CONTENT', () => {
         })
     });
   });
-  // /*
-  // DELETE /api/content/:name/:id
-  // */
-  // describe('DELETE /api/content/:name/:id', () => {
-  //   it('', done => {
+  /*
+  DELETE /api/content/:name/:id
+  ACCESS: logged in USER
+  */
+  describe('DELETE /api/content/:name/:id', () => {
+    it('should return 403 and an error if not logged in as at least a regular user before trying to delete content', done => {
+      chai.request(server)
+        .delete(`/api/content/${contentType1.name}/${post1Id}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .delete(`/api/content/no-specialcharsORnumb3rs/${post1Id}`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Name param must be a valid content type name');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error: Content type does not exist if the provided name is not a content type', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
+          agent
+            .delete(`/api/content/elephant/${post1Id}`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Content type does not exist');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error if no content exists with the id provided', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content/${contentType1.name}/0`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.success).to.be.false;
+              expect(res.body.error).to.equal('No content with that id exists');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return success: true and message: Content successfully deleted if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .end((err, res) => {
+              expect(res.body.message).to.equal('Content successfully deleted');
+              expect(res.body.success).to.be.true;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('deleted content should no longer be present in the DB if successful', done => {
+      const agent = chai.request.agent(server)
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content/${contentType1.name}/${post1Id}`)
+            .end((err, res) => {
+              
+              // query not fully dynamic so make sure to change it if content type in test is no longer post
+              db.query(`SELECT * FROM posts WHERE id = ?`, [post1Id], (err, results) => {
+                if(err) {
+                  throw err;
+                }
+                expect(results.length).to.equal(0);
+                agent.close(err => {
+                  done();
+                })
+              });
+            })
+        })
+    });
+  });
   // /*
   // GET /api/content/all/:name
   // */
