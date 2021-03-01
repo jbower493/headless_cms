@@ -628,7 +628,7 @@ describe('API/CONTENT', () => {
           expect(res).to.have.cookie('session_id');
 
           agent
-            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .delete(`/api/content/${contentType1.name}/${post1Id}`)
             .end((err, res) => {
               expect(res.body.message).to.equal('Content successfully deleted');
               expect(res.body.success).to.be.true;

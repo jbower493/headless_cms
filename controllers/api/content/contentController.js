@@ -142,5 +142,30 @@ module.exports = {
         res.json(new ContentRes(null, 'Content successfully updated', true));
       });
     });
+  },
+
+  deleteContent(req, res, next) {
+    const { name, id } = req.params;
+
+    // return error if name param contains bad chars
+    if(!allLettersOrUnderscore(name)) {
+      return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
+    }
+
+    db.query(`DELETE FROM ${name}s WHERE id = ?`, [id], (err, results) => {
+      if(err) {
+        if(err.code === 'ER_NO_SUCH_TABLE') {
+          return res.status(400).json(new ContentRes('Content type does not exist', '', false));
+        } else {
+          return next(err);
+        }
+      }
+
+      if(results.affectedRows === 0) {
+        return res.status(400).json(new ContentRes('No content with that id exists', '', false));
+      }
+      
+      res.json(new ContentRes(null, 'Content successfully deleted', true));
+    });
   }
 };

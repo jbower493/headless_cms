@@ -80,5 +80,9 @@ apiRouter.get('/content/:name/:id', access.loggedInUser, contentController.getCo
 // ACCESS: logged in USER
 apiRouter.put('/content/:name/:id', access.loggedInUser, contentController.updateContent);
 
+// DELETE /api/content/:name/:id
+// ACCESS: logged in USER
+apiRouter.delete('/content/:name/:id', access.loggedInUser, contentController.deleteContent);
+
 
 module.exports = apiRouter;
