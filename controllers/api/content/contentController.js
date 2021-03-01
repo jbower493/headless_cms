@@ -5,6 +5,9 @@ const db = require('../../../config/db/db');
 const validateContent = require('../../../validators/validateContent');
 const allLettersOrUnderscore = require('../../../validators/allLettersOrUnderscore');
 
+// import privilege checkers
+const privileges = require('../../../access_control/privileges');
+
 // import JSON response helper
 const ContentRes = require('../../../utils/helpers/contentJsonRes');
 const GetContentRes = require('../../../utils/helpers/getContentJsonRes');
@@ -18,6 +21,11 @@ module.exports = {
   createContent (req, res, next) {
     const contentTypeName = req.params.name;
     const newContent = req.body;
+
+    // return permission error if user doesn't have correct privileges
+    if(privileges.canCreate(req.user) !== true) {
+      return res.status(403).json({ error: privileges.canCreate(req.user), success: false });
+    }
 
     // return error if name param contains bad chars
     if(!allLettersOrUnderscore(contentTypeName)) {
@@ -84,7 +92,12 @@ module.exports = {
         return res.status(400).json(new GetContentRes('No content with that id exists', '', false, name, null));
       }
 
-      // remove id from content object
+      // return permission error if user doesn't have correct privileges
+      if(privileges.canRead(req.user, results[0].owner_id) !== true) {
+        return res.status(403).json({ error: privileges.canRead(req.user, results[0].owner_id), success: false });
+      }
+
+      // remove id and owner_id from content object
       delete results[0].id;
       delete results[0].owner_id;
 
@@ -101,11 +114,8 @@ module.exports = {
       return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
     }
 
-    // fetch content type object from db
-    const plural = `${name}s`;
-    const databaseName = db.config.database;
-
-    db.query(`SHOW COLUMNS FROM ${databaseName}.${plural}`, (err, results) => {
+    // get content owner_id from db
+    db.query(`SELECT owner_id FROM ${name}s WHERE id = ?`, [id], (err, results) => {
       if(err) {
         if(err.code === 'ER_NO_SUCH_TABLE') {
           return res.status(400).json(new ContentRes('Content type does not exist', '', false));
@@ -113,33 +123,46 @@ module.exports = {
           return next(err);
         }
       } 
-      // if no error in db call, continue with validation
-
-      // map db results to a content type object
-      const contentType = dbResultsToContentType(results, name);
       
-      // validate new content object against its content type object
-      const validated = validateContent(updatedContent, contentType);
-      
-      if(validated !== true) {
-        return res.status(400).json(new ContentRes(validated, '', false));
+      if(results.length === 0) {
+        return res.status(400).json(new ContentRes('No content with that id exists', '', false));
       }
 
-      // content is valid, everything else is fine, insert the content and send success response
+      // return permission error if user doesn't have correct privileges
+      if(privileges.canUpdate(req.user, results[0].owner_id) !== true) {
+        return res.status(403).json({ error: privileges.canUpdate(req.user, results[0].owner_id), success: false });
+      }
 
-      const queryParams = Object.keys(updatedContent).map(field => updatedContent[field]);
-      queryParams.push(id);
-      
-      db.query(contentQuery.updateContent(updatedContent, name), queryParams, (err, results) => {
+      // fetch content type object from db
+      const databaseName = db.config.database;
+
+      db.query(`SHOW COLUMNS FROM ${databaseName}.${name}s`, (err, results) => {
         if(err) {
           return next(err);
         }
+
+        // map db results to a content type object
+        const contentType = dbResultsToContentType(results, name);
         
-        if(results.affectedRows === 0) {
-          return res.status(400).json(new ContentRes('No content with that id exists', '', false));
+        // validate new content object against its content type object
+        const validated = validateContent(updatedContent, contentType);
+        
+        if(validated !== true) {
+          return res.status(400).json(new ContentRes(validated, '', false));
         }
 
-        res.json(new ContentRes(null, 'Content successfully updated', true));
+        // content is valid, everything else is fine, insert the content and send success response
+
+        const queryParams = Object.keys(updatedContent).map(field => updatedContent[field]);
+        queryParams.push(id);
+        
+        db.query(contentQuery.updateContent(updatedContent, name), queryParams, (err, results) => {
+          if(err) {
+            return next(err);
+          }
+
+          res.json(new ContentRes(null, 'Content successfully updated', true));
+        });
       });
     });
   },
@@ -152,7 +175,8 @@ module.exports = {
       return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
     }
 
-    db.query(`DELETE FROM ${name}s WHERE id = ?`, [id], (err, results) => {
+    // fetch content owner_id from db
+    db.query(`SELECT owner_id FROM ${name}s WHERE id = ?`, [id], (err, results) => {
       if(err) {
         if(err.code === 'ER_NO_SUCH_TABLE') {
           return res.status(400).json(new ContentRes('Content type does not exist', '', false));
@@ -161,11 +185,55 @@ module.exports = {
         }
       }
 
-      if(results.affectedRows === 0) {
+      if(results.length === 0) {
         return res.status(400).json(new ContentRes('No content with that id exists', '', false));
       }
-      
-      res.json(new ContentRes(null, 'Content successfully deleted', true));
+
+      // return permission error if user doesn't have correct privileges
+      if(privileges.canDelete(req.user, results[0].owner_id) !== true) {
+        return res.status(403).json({ error: privileges.canDelete(req.user, results[0].owner_id), success: false });
+      }
+
+      db.query(`DELETE FROM ${name}s WHERE id = ?`, [id], (err, results) => {
+        if(err) {
+          return next(err);
+        }
+        
+        res.json(new ContentRes(null, 'Content successfully deleted', true));
+      });
+    });
+  },
+
+  getAllContent(req, res, next) {
+    const { name } = req.params;
+
+    // return error if name param contains bad chars
+    if(!allLettersOrUnderscore(name)) {
+      return res.status(400).json(new GetContentRes('Name param must be a valid content type name', '', false, name, null));
+    }
+
+    // return permission error if user doesn't have correct privileges
+    if(privileges.canReadAll(req.user) !== true) {
+      return res.status(403).json({ error: privileges.canReadAll(req.user), success: false });
+    }
+
+    db.query(`SELECT * FROM ${name}s`, (err, results) => {
+      if(err) {
+        if(err.code === 'ER_NO_SUCH_TABLE') {
+          return res.status(400).json(new GetContentRes('Content type does not exist', '', false, name, null));
+        } else {
+          return next(err);
+        }
+      }
+      // if no error, continue
+
+      // remove id and owner_id from content object
+      results.forEach(item => {
+        delete item.id;
+        delete item.owner_id;
+      });
+
+      res.json(new GetContentRes(null, 'All content successfully fetched', true, `${name}s`, results));
     });
   }
 };

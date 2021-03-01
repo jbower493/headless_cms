@@ -68,6 +68,10 @@ apiRouter.get('/content-types', access.loggedInUser, contentTypesController.getA
 Content routes
 */
 
+// GET /api/content/all/:name
+// ACCESS: logged in USER
+apiRouter.get('/content/all/:name', access.loggedInUser, contentController.getAllContent);
+
 // POST /api/content/:name
 // ACCESS: logged in USER
 apiRouter.post('/content/:name', access.loggedInUser, contentController.createContent);

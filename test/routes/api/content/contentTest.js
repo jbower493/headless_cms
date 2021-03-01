@@ -44,6 +44,22 @@ describe('API/CONTENT', () => {
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
   let user1Id;
 
+  const userWithNoPrivileges = {
+    username: 'Jimmy',
+    password: 'jimmydoyle',
+    role: 'user'
+  };
+  const userWithNoPrivilegesPrivileges = {
+    "create": false,
+    "read own": false,
+    "read any": false,
+    "update own": false,
+    "update any": false,
+    "delete own": false,
+    "delete any": false
+  };
+  const userWithNoPrivilegesHash = bcrypt.hashSync(userWithNoPrivileges.password, saltRounds);
+
   const contentType1 = {
     name: 'post',
     fields: [
@@ -89,7 +105,7 @@ describe('API/CONTENT', () => {
 
   before(done => {
     // insert regular user into db before all tests
-    db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ? ,?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results, fields) => {
+    db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?), (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges), userWithNoPrivileges.username, userWithNoPrivilegesHash, userWithNoPrivileges.role, JSON.stringify(userWithNoPrivilegesPrivileges)], (err, results, fields) => {
       if(err) {
         throw err;
       }
@@ -159,6 +175,27 @@ describe('API/CONTENT', () => {
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
+        })
+    });
+    it('should return 403 and an error if the logged in user does not have the privilege to create content', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(userWithNoPrivileges)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .post(`/api/content/${contentType1.name}`)
+            .send(newPost)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('You do not have the correct privileges to perform this action');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
         })
     });
     it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
@@ -288,12 +325,32 @@ describe('API/CONTENT', () => {
   describe('GET /api/content/:name/:id', () => {
     it('should return 403 and an error if not logged in as at least a regular user before trying to fetch a content item', done => {
       chai.request(server)
-        .get(`/api/content/${contentType1.name}/${post1.id}`)
+        .get(`/api/content/${contentType1.name}/${post1Id}`)
         .end((err, res) => {
           expect(res).to.have.status(403);
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
+        })
+    });
+    it('should return 403 and an error if the logged in user does not have the privilege to get content', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(userWithNoPrivileges)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/${contentType1.name}/${post1Id}`)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('You do not have the correct privileges to perform this action');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
         })
     });
     it('should return error if provided content type name is not valid', done => {
@@ -402,6 +459,27 @@ describe('API/CONTENT', () => {
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
+        })
+    });
+    it('should return 403 and an error if the logged in user does not have the privilege to update content', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(userWithNoPrivileges)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .put(`/api/content/${contentType1.name}/${post1Id}`)
+            .send(updatedPost)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('You do not have the correct privileges to perform this action');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
         })
     });
     it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
@@ -559,6 +637,26 @@ describe('API/CONTENT', () => {
           done();
         })
     });
+    it('should return 403 and an error if the logged in user does not have the privilege to delete content', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(userWithNoPrivileges)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .delete(`/api/content/${contentType1.name}/${post1Id}`)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('You do not have the correct privileges to perform this action');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
     it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
       const agent = chai.request.agent(server);
       agent
@@ -664,14 +762,103 @@ describe('API/CONTENT', () => {
         })
     });
   });
-  // /*
-  // GET /api/content/all/:name
-  // */
-  // describe('GET /api/content/all/:name', () => {
-  //   it('', done => {
+  /*
+  GET /api/content/all/:name
+  ACCESS: logged in USER
+  */
+  describe('GET /api/content/all/:name', () => {
+    it('should return 403 and an error if not logged in as at least a regular user before trying to get all content', done => {
+      chai.request(server)
+        .get(`/api/content/all/${contentType1.name}`)
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return 403 and an error if the logged in user does not have the privilege to get all content', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(userWithNoPrivileges)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
 
-  //   });
-  // });
+          agent
+            .get(`/api/content/all/${contentType1.name}`)
+            .end((err, res) => {
+              expect(res).to.have.status(403);
+              expect(res.body.error).to.equal('You do not have the correct privileges to perform this action');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error: Name param must be a valid content type name if name param contains bad chars', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/all/no-specialcharsORnumb3rs`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Name param must be a valid content type name');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return error: Content type does not exist if the provided name is not a content type', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/all/elephant`)
+            .end((err, res) => {
+              expect(res).to.have.status(400);
+              expect(res.body.error).to.equal('Content type does not exist');
+              expect(res.body.success).to.be.false;
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+    it('should return an array of all content objects', done => {
+      const agent = chai.request.agent(server);
+      agent
+        .post('/auth/login')
+        .send(user1)
+        .end((err, res) => {
+          expect(res).to.have.cookie('session_id');
+
+          agent
+            .get(`/api/content/all/${contentType1.name}`)
+            .end((err, res) => {
+              expect(res.body.data).to.be.an('object');
+              expect(res.body.data[`${contentType1.name}s`]).to.be.an('array');
+              expect(res.body.data[`${contentType1.name}s`].length).to.equal(2);
+              expect(res.body.message).to.equal('All content successfully fetched');
+              agent.close(err => {
+                done();
+              })
+            })
+        })
+    });
+  });
   // /*
   // DELETE /api/content/all/:name
   // */
