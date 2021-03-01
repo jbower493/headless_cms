@@ -45,7 +45,10 @@ app.use(session({
 }));
 
 // allow cross origin resource sharing, note the default setting allows ANY origin to connect, change this for production
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 
 // parse json request bodies
 app.use(express.json());

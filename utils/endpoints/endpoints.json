@@ -1,0 +1,169 @@
+{
+  "auth": [
+    {
+      "url": "/auth/admin-exists",
+      "method": "GET",
+      "requestBody": null
+    },
+    {
+      "url": "/auth/get-user",
+      "method": "GET",
+      "requestBody": null
+    },
+    {
+      "url": "/auth/login",
+      "method": "POST",
+      "requestBody": {
+        "username": "something",
+        "password": "something",
+        "role": "user"
+      }
+    },
+    {
+      "url": "/auth/logout",
+      "method": "GET",
+      "requestBody": null
+    }
+  ],
+
+  "api/user": [
+    {
+      "url": "/api/user",
+      "method": "POST",
+      "requestBody": {
+        "username": "John",
+        "password": "johndoe",
+        "role": "user",
+        "privileges": {
+          "create": true,
+          "read own": true,
+          "read any": true,
+          "update own": true,
+          "update any": false,
+          "delete own": true,
+          "delete any": false
+        }
+      }
+    },
+    {
+      "url": "/api/user/:id",
+      "method": "GET",
+      "requestBody": null
+    },
+    {
+      "url": "/api/user/:id",
+      "method": "PUT",
+      "requestBody": {
+        "username": "John",
+        "password": "johndoe",
+        "role": "user",
+        "privileges": {
+          "create": true,
+          "read own": true,
+          "read any": true,
+          "update own": true,
+          "update any": false,
+          "delete own": true,
+          "delete any": false
+        }
+      }
+    },
+    {
+      "url": "/api/user/:id",
+      "method": "DELETE",
+      "requestBody": null
+    },
+    {
+      "url": "/api/users",
+      "method": "GET",
+      "requestBody": null
+    }
+  ],
+
+  "api/content-type": [
+    {
+      "url": "/api/content-type",
+      "method": "POST",
+      "requestBody": {
+        "name": "post",
+        "fields": [
+          {
+            "name": "title",
+            "type": "text",
+            "required": true
+          },
+          {
+            "name": "body",
+            "type": "text",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "url": "/api/content-type/:name",
+      "method": "GET",
+      "requestBody": null
+    },
+    {
+      "url": "/api/content-type/:name",
+      "method": "PUT",
+      "requestBody": {
+        "name": "post",
+        "fields": [
+          {
+            "name": "title",
+            "type": "text",
+            "required": true
+          },
+          {
+            "name": "body",
+            "type": "text",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "url": "/api/content-type/:name",
+      "method": "DELETE",
+      "requestBody": null
+    }
+  ],
+
+  "api/content": [
+    {
+      "url": "/api/content/:name",
+      "method": "POST",
+      "requestBody": {
+        "title": "Post One Title",
+        "body": "Lorem ipsum dolor sit amet",
+        "image_ref": "/images/post-one.jpg"
+      }
+    },
+    {
+      "url": "/api/content/:name/:id",
+      "method": "GET",
+      "requestBody": null
+    },
+    {
+      "url": "/api/content/:name/:id",
+      "method": "PUT",
+      "requestBody": {
+        "title": "Post One Title",
+        "body": "Lorem ipsum dolor sit amet",
+        "image_ref": "/images/post-one.jpg"
+      }
+    },
+    {
+      "url": "/api/content/:name/:id",
+      "method": "DELETE",
+      "requestBody": null
+    },
+    {
+      "url": "/api/content/all/:name",
+      "method": "GET",
+      "requestBody": null
+    }
+  ]
+}

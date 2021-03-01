@@ -51,7 +51,7 @@ module.exports = {
     }
 
     if(errors.length > 0) {
-      res.json(new AuthRes(errors[0], '', false, null));
+      return res.json(new AuthRes(errors[0], '', false, null));
     }
 
     db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
