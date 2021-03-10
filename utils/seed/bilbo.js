@@ -12,7 +12,7 @@ const adminPrivileges = {
   "delete any": true
 };
 
-db.query('INSERT INTO users (username, password, role, privileges) VALUES ("Bilbo", ?, "user", ?)', [bcrypt.hashSync('baggins', 10), JSON.stringify(adminPrivileges)], (err, results) => {
+db.query('INSERT INTO users (username, password, role, privileges) VALUES ("Bilbo", ?, "admin", ?)', [bcrypt.hashSync('baggins', 10), JSON.stringify(adminPrivileges)], (err, results) => {
   if(!err) console.log('Baggins is in there');
   if(err) console.log(err);
   db.end(err => {

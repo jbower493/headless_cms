@@ -63,6 +63,10 @@ module.exports = {
         return res.json(new AuthRes('Incorrect credentials', '', false, null));
       }
 
+      if(results[0].role !== role) {
+        return res.json(new AuthRes('Incorrect credentials', '', false, null));
+      }
+
       try {
         const matches = await bcrypt.compare(password, results[0].password);
         if(matches) {
