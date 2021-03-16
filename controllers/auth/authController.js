@@ -27,7 +27,7 @@ module.exports = {
   getUser(req, res, next) {
     
     if(req.user) {
-      res.json(new AuthRes(null, 'A user is logged in', true, { name: req.user.username }));
+      res.json(new AuthRes(null, 'A user is logged in', true, { username: req.user.username, role: req.user.role }));
     } else {
       res.json(new AuthRes(null, 'No user is logged in', true, null));
     }
@@ -71,7 +71,7 @@ module.exports = {
         const matches = await bcrypt.compare(password, results[0].password);
         if(matches) {
           req.session.auth = { userId: results[0].id };
-          res.json(new AuthRes(null, 'Log in successful', true, { username: results[0].username }));
+          res.json(new AuthRes(null, 'Log in successful', true, { username: results[0].username, role: results[0].role }));
         } else {
           res.json(new AuthRes('Incorrect credentials', '', false, null));
         }
