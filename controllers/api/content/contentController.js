@@ -227,13 +227,28 @@ module.exports = {
       }
       // if no error, continue
 
-      // remove id and owner_id from content object
+      // remove id
       results.forEach(item => {
         delete item.id;
-        delete item.owner_id;
       });
 
-      res.json(new GetContentRes(null, 'All content successfully fetched', true, `${name}s`, results));
+      // deserialize owner id to author property
+      db.query('SELECT id, username FROM users', (err, allUsers) => {
+        if(err) {
+          return next(err);
+        }
+
+        results.forEach(item => {
+          const author = allUsers.find(user => user.id === item.owner_id);
+          item.author = {
+            id: author.id,
+            username: author.username
+          };
+          delete item.owner_id;
+        });
+
+        res.json(new GetContentRes(null, 'All content successfully fetched', true, `${name}s`, results));
+      });
     });
   }
 };

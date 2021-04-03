@@ -157,7 +157,7 @@ module.exports = {
         }
         return { name: singularNameArray.join('') };
       });
-      // remove tables that are not content types from the response object (had to do it twice beacuse for some unknown reason it wouldn't fin the users item the first time round)
+      // remove tables that are not content types from the response object (had to do it twice beacuse for some unknown reason it wouldn't find the users item the first time round)
       responseContentTypes.forEach(item => {
         if(item.name === 'session') {
           responseContentTypes.splice(responseContentTypes.indexOf(item), 1);
