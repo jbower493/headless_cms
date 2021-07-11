@@ -15,6 +15,10 @@ const authRouter = express.Router();
 // ACCESS: PUBLIC
 authRouter.get('/admin-exists', authController.adminExists);
 
+// POST /auth/create-admin
+// ACCESS: no users or admin exist
+authRouter.post('/create-admin', access.noUsers, authController.createAdmin);
+
 // GET /auth/get-user
 // ACCESS: PUBLIC
 authRouter.get('/get-user', authController.getUser);

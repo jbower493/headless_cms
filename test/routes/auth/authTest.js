@@ -25,13 +25,13 @@ chai.use(chaiHttp);
 // parent block
 describe('AUTH', () => {
   const user1Privileges = {
-    "create": "yes",
-    "read own": "yes",
-    "read any": "yes",
-    "update own": "yes",
-    "update any": "no",
-    "delete own": "yes",
-    "delete any": "no"
+    "create": true,
+    "read own": true,
+    "read any": true,
+    "update own": true,
+    "update any": false,
+    "delete own": true,
+    "delete any": false
   };
 
   const user1 = {
@@ -40,32 +40,54 @@ describe('AUTH', () => {
     role: 'user'
   };
   const user1Hash = bcrypt.hashSync(user1.password, saltRounds);
+
+  const admin1 = {
+    username: 'mradmin',
+    password: 'mr-admin2021',
+    role: 'admin',
+    privileges: {
+      "create": true,
+      "read own": true,
+      "read any": true,
+      "update own": true,
+      "update any": true,
+      "delete own": true,
+      "delete any": true
+    }
+  };
+  const admin1Hash = bcrypt.hashSync(admin1.password, saltRounds);
   // runs once after all tests in the main describe block
   before((done) => {
     db.connect(err => {
-      if(err) {
+      if (err) {
         throw err;
       }
-      db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results) => {
-        if(err) {
-          throw err;
-        }
-        done();
-      });
+      done();
     });
   });
   // runs once after all tests in the main describe block
   after((done) => {
-    db.query('DELETE FROM users', (err, results) => {
-      if(err) {
+    db.end(err => {
+      if (err) {
         throw err;
       }
-      db.end(err => {
-        if(err) {
-          throw err;
-        }
-        done();
-      });
+      done();
+    });
+  });
+  beforeEach((done) => {
+    db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [user1.username, user1Hash, user1.role, JSON.stringify(user1Privileges)], (err, results) => {
+      if (err) {
+        throw err;
+      }
+      done();
+    });
+  });
+  afterEach((done) => {
+    db.query('DELETE FROM users', (err, results) => {
+      if (err) {
+        throw err;
+      }
+      done();
     });
   });
   /*
@@ -77,38 +99,82 @@ describe('AUTH', () => {
       chai.request(server)
         .get('/auth/admin-exists')
         .end((err, res) => {
-            expect(res.body.adminExists).to.be.false;
+          expect(res.body.adminExists).to.be.false;
           done();
         });
     });
-    it('should send back adminExists: true if an admin user exists in the database', done => {    
-      const admin1 = {
-        username: 'mradmin',
-        password: 'mr-admin2021',
-        role: 'admin',
-        privileges: {
-          "create": "yes",
-          "read own": "yes",
-          "read any": "yes",
-          "update own": "yes",
-          "update any": "yes",
-          "delete own": "yes",
-          "delete any": "yes"
-        }
-      };
-      const admin1Hash = bcrypt.hashSync(admin1.password, saltRounds);
-
+    it('should send back adminExists: true if an admin user exists in the database', done => {
       db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [admin1.username, admin1Hash, admin1.role, JSON.stringify(admin1.privileges)], (err, results) => {
-        if(err) {
+        if (err) {
           throw err;
         }
 
         chai.request(server)
           .get('/auth/admin-exists')
           .end((err, res) => {
-              expect(res.body.adminExists).to.be.true;
+            expect(res.body.adminExists).to.be.true;
             done();
           });
+      });
+    });
+  });
+  /*
+    POST /auth/create-admin
+    ACCESS: no users or admin exist
+  */
+  describe('POST /auth/create-admin', () => {
+    it('should return 403 and an error if a user or an admin exists in the database', done => {
+      chai.request(server)
+        .post('/auth/create-admin')
+        .send({ username: admin1.username, password: admin1.password })
+        .end((err, res) => {
+          expect(res).to.have.status(403);
+          expect(res.body.error).to.equal('Access denied');
+          expect(res.body.success).to.be.false;
+          done();
+        })
+    });
+    it('should return success: true and message: Admin successfully created if successful', done => {
+      db.query('DELETE FROM users', (err, results) => {
+        if (err) {
+          throw err;
+        }
+
+        chai.request(server)
+          .post('/auth/create-admin')
+          .send({ username: admin1.username, password: admin1.password })
+          .end((err, res) => {
+            expect(res).to.have.status(200);
+            expect(res.body.message).to.equal('Admin successfully created');
+            expect(res.body.success).to.be.true;
+            done();
+          })
+      });
+    });
+    it('new admin should be present in the DB if successful and properties should be correct', done => {
+      db.query('DELETE FROM users', (err, results) => {
+        if (err) {
+          throw err;
+        }
+
+        const agent = chai.request.agent(server)
+        agent
+          .post('/auth/create-admin')
+          .send({ username: admin1.username, password: admin1.password })
+          .end((err, res) => {
+            db.query('SELECT * FROM users', (err, results) => {
+              if(err) {
+                throw err;
+              }
+              expect(results.length).to.equal(1);
+              expect(results[0].username).to.equal(admin1.username);
+              expect(results[0].role).to.equal(admin1.role);
+              expect(results[0].privileges).to.equal(JSON.stringify(admin1.privileges));
+              agent.close(err => {
+                done();
+              })
+            })
+          })
       });
     });
   });
@@ -143,7 +209,7 @@ describe('AUTH', () => {
           expect(res.body.message).to.equal('No user is logged in');
           expect(res.body.success).to.be.true;
           expect(res.body.user).to.be.null;
-          done(); 
+          done();
         })
     });
   });
@@ -159,7 +225,7 @@ describe('AUTH', () => {
         .end((err, res) => {
           expect(res.body.success).to.be.true;
           expect(res.body.user).to.be.an('object');
-          done(); 
+          done();
         })
     });
     it('should return an error on the response if incorrect credentials are provided', (done) => {

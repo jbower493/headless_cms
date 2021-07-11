@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "set NODE_ENV=test&&mocha --exit --recursive",
-    "single-test": "set NODE_ENV=test&&mocha --exit ./test/routes/api/content/contentTypesTest.js",
+    "single-test": "set NODE_ENV=test&&mocha --exit ./test/routes/auth/authTest.js",
     "test-validators": "mocha --exit test/validators/validatorsTest.js",
     "start": "set NODE_ENV=dev&&node server.js",
     "dev": "set NODE_ENV=dev&&nodemon server.js",

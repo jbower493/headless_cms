@@ -6,6 +6,14 @@
       "requestBody": null
     },
     {
+      "url": "/auth/create-admin",
+      "method": "POST",
+      "requestBody": {
+        "username": "John",
+        "password": "johndoe"
+      }
+    },
+    {
       "url": "/auth/get-user",
       "method": "GET",
       "requestBody": null

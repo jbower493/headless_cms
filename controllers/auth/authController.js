@@ -4,8 +4,14 @@ const bcrypt = require('bcrypt');
 // import db
 const db = require('../../config/db/db');
 
+// import validators
+const validateUser = require('../../validators/validateUser');
+
 // import JSON response helper
 const AuthRes = require('../../utils/helpers/authJsonRes');
+
+// import models
+const User = require('../../models/User');
 
 module.exports = {
   adminExists(req, res, next) {
@@ -24,8 +30,36 @@ module.exports = {
     });
   },
 
-  getUser(req, res, next) {
+  createAdmin(req, res, next) {
+    const { username, password } = req.body;
     
+    const privileges = {
+      "create": true,
+      "read own": true,
+      "read any": true,
+      "update own": true,
+      "update any": true,
+      "delete own": true,
+      "delete any": true
+    };
+
+    const newUser = new User(username, password, 'admin', privileges);
+    const validated = validateUser(newUser);
+
+    if(validated !== true) {
+      return res.status(400).json(new UserRes(validated, '', false, null));
+    }
+
+    const hash = bcrypt.hashSync(password, 10);
+    db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [username, hash, 'admin', JSON.stringify(privileges)], (err, results) => {
+      if (err) {
+        return next(err);
+      }
+      res.json(new AuthRes(null, 'Admin successfully created', true, null));
+    });
+  },
+
+  getUser(req, res, next) {
     if(req.user) {
       res.json(new AuthRes(null, 'A user is logged in', true, { username: req.user.username, role: req.user.role }));
     } else {
@@ -34,7 +68,6 @@ module.exports = {
   },
 
   login(req, res, next) {
-
     const { username, password, role } = req.body;
 
     const errors = [];
