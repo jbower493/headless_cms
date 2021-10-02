@@ -53,15 +53,20 @@ app.use(cors({
 // parse json request bodies
 app.use(express.json());
 
-// temporary, delete this when front end is built
-app.use(express.urlencoded({ extended: false }));
-
 // log http requests
 const morganFormat = require('./config/logging/morganFormat');
 app.use(morgan(morganFormat, { stream: logger.stream }));
 
 // make logged in user available on req object as req.user
 app.use(authController.deserializeUser);
+
+// add a 1 second delay to responses if dev mode, so I can see the loading states in development
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'dev') {
+    return setTimeout(() => next(), 1000);
+  }
+  next();
+});
 
 // mount routers
 app.use('/auth', authRouter);

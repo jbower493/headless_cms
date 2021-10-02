@@ -21,3 +21,24 @@ Content-Type: application/json
     }
   ]
 }
+
+###
+
+POST http://localhost:8080/api/content-type HTTP/1.1
+Content-Type: application/json
+
+{
+  "name": "heading",
+  "fields": [
+    {
+      "name": "page heading",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "paragraph heading 1",
+      "type": "text",
+      "required": true
+    }
+  ]
+}

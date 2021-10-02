@@ -32,7 +32,7 @@ module.exports = {
 
   createAdmin(req, res, next) {
     const { username, password } = req.body;
-    
+
     const privileges = {
       "create": true,
       "read own": true,
@@ -47,7 +47,7 @@ module.exports = {
     const validated = validateUser(newUser);
 
     if(validated !== true) {
-      return res.status(400).json(new UserRes(validated, '', false, null));
+      return res.status(400).json(new AuthRes(validated, '', false, null));
     }
 
     const hash = bcrypt.hashSync(password, 10);
