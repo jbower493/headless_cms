@@ -202,12 +202,13 @@ describe('AUTH', () => {
             })
         })
     });
-    it('should send back a message no user is logged in and success true if no user is logged in', (done) => {
+    it('should send back an error of no user is logged in if no user is logged in', (done) => {
       chai.request(server)
         .get('/auth/get-user')
         .end((err, res) => {
-          expect(res.body.message).to.equal('No user is logged in');
-          expect(res.body.success).to.be.true;
+          expect(res).to.have.status(401);
+          expect(res.body.error).to.equal('No user is logged in');
+          expect(res.body.success).to.be.false;
           expect(res.body.user).to.be.null;
           done();
         })
@@ -228,7 +229,7 @@ describe('AUTH', () => {
           done();
         })
     });
-    it('should return an error on the response if incorrect credentials are provided', (done) => {
+    it('should return a 401 error if incorrect credentials are provided', (done) => {
       const falseUser = {
         username: 'NotARealUser',
         password: 'password2',
@@ -239,12 +240,13 @@ describe('AUTH', () => {
         .post('/auth/login')
         .send(falseUser)
         .end((err, res) => {
+          expect(res).to.have.status(401);
           expect(res.body.success).to.be.false;
           expect(res.body.error).to.equal('Incorrect credentials');
           done();
         })
     });
-    it('should return an error on the response if not all fields are provided', (done) => {
+    it('should return a 400 error if not all fields are provided', (done) => {
       const incompleteUser = {
         username: 'NotARealUser',
         role: 'user'
@@ -254,12 +256,13 @@ describe('AUTH', () => {
         .post('/auth/login')
         .send(incompleteUser)
         .end((err, res) => {
+          expect(res).to.have.status(400);
           expect(res.body.success).to.be.false;
           expect(res.body.error).to.equal('Field(s) missing');
           done();
         })
     });
-    it('should return an error on the response if fields are not all strings', (done) => {
+    it('should return a 400 error if fields are not all strings', (done) => {
       const notStringsUser = {
         username: { key: 'value' },
         password: ['an', 'array'],
@@ -270,12 +273,13 @@ describe('AUTH', () => {
         .post('/auth/login')
         .send(notStringsUser)
         .end((err, res) => {
+          expect(res).to.have.status(400);
           expect(res.body.success).to.be.false;
           expect(res.body.error).to.equal('Not strings');
           done();
         })
     });
-    it('should return an error on the response if role is not user or admin', (done) => {
+    it('should return a 400 error if role is not user or admin', (done) => {
       const incorrectRoleUser = {
         username: 'NotARealUser',
         password: 'password2',
@@ -286,6 +290,7 @@ describe('AUTH', () => {
         .post('/auth/login')
         .send(incorrectRoleUser)
         .end((err, res) => {
+          expect(res).to.have.status(400);
           expect(res.body.success).to.be.false;
           expect(res.body.error).to.equal('Incorrect role');
           done();
@@ -323,10 +328,11 @@ describe('AUTH', () => {
             })
         })
     });
-    it('should return an error and success: false if there is no user currently logged in', (done) => {
+    it('should return a 401 error if there is no user currently logged in', (done) => {
       chai.request(server)
         .get('/auth/logout')
         .end((err, res) => {
+          expect(res).to.have.status(401);
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();

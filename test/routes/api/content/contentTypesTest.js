@@ -188,7 +188,7 @@ describe('API/CONTENT-TYPES', () => {
             })
         })
     });
-    it('should return an error and success: false if a content type already exists with that name', done => {
+    it('should return a 400 error if a content type already exists with that name', done => {
       const agent = chai.request.agent(server)
       agent
         .post('/auth/login')
@@ -200,6 +200,7 @@ describe('API/CONTENT-TYPES', () => {
             .post('/api/content-type')
             .send(contentType1)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.error).to.equal('A content type already exists with that name');
               expect(res.body.success).to.be.false;
               agent.close(err => {
@@ -208,7 +209,7 @@ describe('API/CONTENT-TYPES', () => {
             })
         })
     });
-    it('should return an error and success: false if the new content type object does not pass validation', done => {
+    it('should return a 400 error if the new content type object does not pass validation', done => {
       const invalidContentType = {
         name: 'double"quotes"in-name',
         extraProp: true,
@@ -246,7 +247,7 @@ describe('API/CONTENT-TYPES', () => {
             })
         })
     });
-    it('should return an error and success: false if SQL injection is attempted', done => {
+    it('should return a 400 error if SQL injection is attempted', done => {
       const injectionContentType = {
         name: 'restaurants (id INT NOT NULL AUTO_INCREMENT, name TEXT, PRIMARY KEY (id)); DROP TABLE users;',
         fields: [
@@ -346,7 +347,7 @@ describe('API/CONTENT-TYPES', () => {
           done();
         })
     });
-    it('should return error if provided content type name is not valid', done => {
+    it('should return a 400 error if provided content type name is not valid', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -357,6 +358,7 @@ describe('API/CONTENT-TYPES', () => {
           agent
             .get('/api/content-type/Hello1066!')
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.contentType).to.be.null;
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('Name parameter must contain only lowercase letters or underscores');
@@ -366,7 +368,7 @@ describe('API/CONTENT-TYPES', () => {
             })
         })
     });
-    it('should return error if no content type exists with the name provided', done => {
+    it('should return a 400 error if no content type exists with the name provided', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -377,6 +379,7 @@ describe('API/CONTENT-TYPES', () => {
           agent
             .get('/api/content-type/flamingo')
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.contentType).to.be.null;
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No content type with that name exists');
@@ -601,7 +604,7 @@ describe('API/CONTENT-TYPES', () => {
           done();
         })
     });
-    it('should return an error if no content type with the provided name exists', done => {
+    it('should return a 400 error if no content type with the provided name exists', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -612,6 +615,7 @@ describe('API/CONTENT-TYPES', () => {
           agent
             .delete(`/api/content-type/flamingo`)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No content type with that name exists');
               agent.close(err => {

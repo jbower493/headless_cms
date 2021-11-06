@@ -140,7 +140,7 @@ describe('API/USERS', () => {
           done();
         })
     });
-    it('should return an error and success: false if the username is already in use', done => {
+    it('should return a 400 error if the username is already in use', done => {
       const alreadyTakenUser = {
         username: user1.username,
         password: 'fredfred',
@@ -167,6 +167,7 @@ describe('API/USERS', () => {
             .post('/api/user')
             .send(alreadyTakenUser)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.error).to.equal('Username already in use');
               expect(res.body.success).to.be.false;
               agent.close(err => {
@@ -175,7 +176,7 @@ describe('API/USERS', () => {
             })
         })
     });
-    it('should return an error and success: false if the new user object does not pass validation', done => {
+    it('should return a 400 error if the new user object does not pass validation', done => {
       const invalidUser = {
         username: 'Fred',
         password: 'fre',
@@ -275,7 +276,7 @@ describe('API/USERS', () => {
           done();
         })
     });
-    it('should return an error if no user with the provided id exists', done => {
+    it('should return a 400 error if no user with the provided id exists', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -286,6 +287,7 @@ describe('API/USERS', () => {
           agent
             .get(`/api/user/0`)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.user).to.be.null;
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No user exists with this id');
@@ -350,7 +352,7 @@ describe('API/USERS', () => {
           done();
         })
     });
-    it('should return an error if no user with the provided id exists', done => {
+    it('should return a 400 error if no user with the provided id exists', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -362,6 +364,7 @@ describe('API/USERS', () => {
             .put(`/api/user/0`)
             .send(alteredUser)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No user exists with this id');
               agent.close(err => {
@@ -370,7 +373,7 @@ describe('API/USERS', () => {
             })
         })
     });
-    it('should return an error and success: false if the altered user object does not pass validation', done => {
+    it('should return a 400 error if the altered user object does not pass validation', done => {
       const invalidUser = {
         username: 'Fred',
         password: 'fre',
@@ -462,7 +465,7 @@ describe('API/USERS', () => {
           done();
         })
     });
-    it('should return an error if no user with the provided id exists', done => {
+    it('should return a 400 error if no user with the provided id exists', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -473,6 +476,7 @@ describe('API/USERS', () => {
           agent
             .delete(`/api/user/0`)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No user exists with this id');
               agent.close(err => {

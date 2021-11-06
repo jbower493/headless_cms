@@ -374,7 +374,7 @@ describe('API/CONTENT', () => {
             })
         })
     });
-    it('should return error if no content type exists with the name provided', done => {
+    it('should return 400 error if no content type exists with the name provided', done => {
       const agent = chai.request.agent(server);
       agent
         .post('/auth/login')
@@ -385,6 +385,7 @@ describe('API/CONTENT', () => {
           agent
             .get(`/api/content/flamingo/1`)
             .end((err, res) => {
+              expect(res).to.have.status(400);
               expect(res.body.data).to.be.null;
               expect(res.body.success).to.be.false;
               expect(res.body.error).to.equal('No content type with that name exists');
