@@ -3,3 +3,4 @@ Known Bugs:
 - EditableTitle component tries to submit the form when you hit the 'enter' button to unfocus the input
 - Backend throws 500 SQL syntax error if content type name is a protected SQL word, eg. 'all'
 - Logout has no loader
+- New content types request error not handled on frontend
