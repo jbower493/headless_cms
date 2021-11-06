@@ -29,7 +29,7 @@ module.exports = {
         return next(err);
       }
       if(results.length > 0) {
-        return res.json(new UserRes('Username already in use', '', false, null));
+        return res.status(400).json(new UserRes('Username already in use', '', false, null));
       }
       const hash = bcrypt.hashSync(password, 10);
       db.query('INSERT INTO users (username, password, role, privileges) VALUES (?, ?, ?, ?)', [username, hash, role, JSON.stringify(privileges)], (err, results) => {
@@ -47,7 +47,7 @@ module.exports = {
         return next(err);
       }
       if(results.length === 0) {
-        res.json(new UserRes('No user exists with this id', '', false, null));
+        res.status(400).json(new UserRes('No user exists with this id', '', false, null));
       } else {
         results[0].privileges = JSON.parse(results[0].privileges);
         res.json(new UserRes(null, 'User successfully fetched', true, results[0]));
@@ -72,7 +72,7 @@ module.exports = {
         return next(err);
       }
       if(results.affectedRows === 0) {
-        return res.json(new UserRes('No user exists with this id', '', false, null));
+        return res.status(400).json(new UserRes('No user exists with this id', '', false, null));
       }
       res.json(new UserRes(null, 'User successfully updated', true, null));
     });
@@ -84,7 +84,7 @@ module.exports = {
         return next(err);
       }
       if(results.affectedRows === 0) {
-        return res.json(new UserRes('No user exists with this id', '', false, null));
+        return res.status(400).json(new UserRes('No user exists with this id', '', false, null));
       }
       res.json(new UserRes(null, 'User successfully deleted', true, null));
     });

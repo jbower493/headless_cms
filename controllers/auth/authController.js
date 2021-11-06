@@ -63,7 +63,7 @@ module.exports = {
     if(req.user) {
       res.json(new AuthRes(null, 'A user is logged in', true, { username: req.user.username, role: req.user.role }));
     } else {
-      res.json(new AuthRes(null, 'No user is logged in', true, null));
+      res.status(403).json(new AuthRes('No user is logged in', null, false, null));
     }
   },
 
@@ -84,7 +84,7 @@ module.exports = {
     }
 
     if(errors.length > 0) {
-      return res.json(new AuthRes(errors[0], '', false, null));
+      return res.status(400).json(new AuthRes(errors[0], '', false, null));
     }
 
     db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
@@ -93,11 +93,11 @@ module.exports = {
       }
 
       if(results.length === 0) {
-        return res.json(new AuthRes('Incorrect credentials', '', false, null));
+        return res.status(403).json(new AuthRes('Incorrect credentials', '', false, null));
       }
 
       if(results[0].role !== role) {
-        return res.json(new AuthRes('Incorrect credentials', '', false, null));
+        return res.status(403).json(new AuthRes('Incorrect credentials', '', false, null));
       }
 
       try {
@@ -106,7 +106,7 @@ module.exports = {
           req.session.auth = { userId: results[0].id };
           res.json(new AuthRes(null, 'Log in successful', true, { username: results[0].username, role: results[0].role }));
         } else {
-          res.json(new AuthRes('Incorrect credentials', '', false, null));
+          res.status(403).json(new AuthRes('Incorrect credentials', '', false, null));
         }
       } catch(err) {
         next(err);

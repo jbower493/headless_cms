@@ -30,7 +30,7 @@ module.exports = {
         return next(err);
       }
       if(results.warningCount > 0) {
-        return res.json(new ContentTypeRes('A content type already exists with that name', '', false, null));
+        return res.status(400).json(new ContentTypeRes('A content type already exists with that name', '', false, null));
       }
       
       res.json(new ContentTypeRes(null, 'Content type successfully created', true, null));
@@ -49,7 +49,7 @@ module.exports = {
     db.query(`SHOW COLUMNS FROM ${databaseName}.${plural}`, (err, results) => {
       if(err) {
         if(err.code === 'ER_NO_SUCH_TABLE') {
-          return res.json(new ContentTypeRes('No content type with that name exists', '', false, null));
+          return res.status(400).json(new ContentTypeRes('No content type with that name exists', '', false, null));
         } else {
           return next(err);
         }
@@ -135,7 +135,7 @@ module.exports = {
       }
 
       if(results.warningCount > 0) {
-        return res.json(new ContentTypeRes('No content type with that name exists', '', false, null));
+        return res.status(400).json(new ContentTypeRes('No content type with that name exists', '', false, null));
       }
 
       res.json(new ContentTypeRes(null, 'Content type successfully deleted', true, null));

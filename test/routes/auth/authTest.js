@@ -206,7 +206,7 @@ describe('AUTH', () => {
       chai.request(server)
         .get('/auth/get-user')
         .end((err, res) => {
-          expect(res).to.have.status(401);
+          expect(res).to.have.status(403);
           expect(res.body.error).to.equal('No user is logged in');
           expect(res.body.success).to.be.false;
           expect(res.body.user).to.be.null;
@@ -229,7 +229,7 @@ describe('AUTH', () => {
           done();
         })
     });
-    it('should return a 401 error if incorrect credentials are provided', (done) => {
+    it('should return a 403 error if incorrect credentials are provided', (done) => {
       const falseUser = {
         username: 'NotARealUser',
         password: 'password2',
@@ -240,7 +240,7 @@ describe('AUTH', () => {
         .post('/auth/login')
         .send(falseUser)
         .end((err, res) => {
-          expect(res).to.have.status(401);
+          expect(res).to.have.status(403);
           expect(res.body.success).to.be.false;
           expect(res.body.error).to.equal('Incorrect credentials');
           done();
@@ -319,7 +319,7 @@ describe('AUTH', () => {
               agent
                 .get('/auth/get-user')
                 .end((err, res) => {
-                  expect(res.body.message).to.equal('No user is logged in');
+                  expect(res.body.error).to.equal('No user is logged in');
                   expect(res.body.user).to.be.null;
                   agent.close(err => {
                     done();
@@ -328,11 +328,11 @@ describe('AUTH', () => {
             })
         })
     });
-    it('should return a 401 error if there is no user currently logged in', (done) => {
+    it('should return a 403 error if there is no user currently logged in', (done) => {
       chai.request(server)
         .get('/auth/logout')
         .end((err, res) => {
-          expect(res).to.have.status(401);
+          expect(res).to.have.status(403);
           expect(res.body.error).to.equal('Access denied');
           expect(res.body.success).to.be.false;
           done();
