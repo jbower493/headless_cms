@@ -91,7 +91,7 @@ module.exports = {
   },
 
   getAllUsers(req, res, next) {
-    db.query('SELECT id, username, role, privileges FROM users WHERE role = "user"', (err, results) => {
+    db.query('SELECT id, username, role FROM users WHERE role = "user"', (err, results) => {
       if(err) {
         return next(err);
       }
